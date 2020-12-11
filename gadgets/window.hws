@@ -1,0 +1,194 @@
+/*
+**  Window.hws
+**
+**  A window gadget type for RapaEdit
+**
+**  By Samuel D. Crow
+*/
+Global window={}
+window["count"]=0
+window["prefix$"]="win_"
+window["kind$"]="window"
+window["edit$"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
+<dialog id="win_req" title="window">
+	<vgroup>
+		<colgroup columns="2">
+			<label>ID</label>
+			<textentry id="win_id" reject="0123456789" />
+			<label>Title</label>
+			<textentry id="win_title" />
+			<label>Width</label>
+			<textentry id="win_width" accept="1234567890" />
+			<label>Height</label>
+			<textentry id="win_height" accept="1234567890" />
+		</colgroup>
+		<checkbox id="win_size">Resizable</checkbox>
+		<checkbox id="win_drag">Draggable</checkbox>
+		<checkbox id="win_tool">Tool Box</checkbox>
+		<checkbox id="win_close">Closable</checkbox>
+		<hgroup>
+			<button id="win_ok" icon="12">OK</button>
+			<button id="win_cancel" icon="13">Cancel</button>
+		</hgroup>
+	</vgroup>
+</dialog>]]
+
+window["define"]={}
+window.define["title$"]=""
+window.define["width"]=800
+window.define["height"]=600
+window.define["resizable"]=True
+window.define["toolwindow"]=False
+window.define["closegadget"]=True
+window.define["draggable"]=True
+;window.define.contents must be Nil if empty
+;parent, count and id defined by factory method
+
+/*
+**  Window Factory Method
+**
+**	Generates window defines and update static counter
+**
+**	Accepts parent application class
+**
+**  Returns initialized table of window data
+*/
+Function window:new(app)
+	Local w=CopyTable(self.define)
+
+	; add parent and type link
+	w["parent"]=app
+	w["type"]=window
+
+	;enumerate count from static variable
+	w["count"]=self.count
+	self.count=w.count+1
+
+	;set default id
+	w["id$"]="win"..StrStr(w.count)
+
+	Return(w)
+EndFunction
+
+/*
+**	Window destructor method
+**
+**	Deletes window and all contents 
+*/
+Function window.define:delete()
+	If (Not IsNil(RawGet(self, "contents"))) Then self.contents:delete()
+	Local uid$=moai.Get(self.id$, "UID")
+	treeitems[uid$]=Nil
+	moai.DoMethod("tree_hierarchy", "Remove", self.id$)
+	self=Nil
+EndFunction
+
+/*
+**	Handler
+**
+**	Handles input from edit requester
+*/
+Function window.handler(message, prefixLength)
+	Local ud=RawGet(message, "userdata")
+	Local suffix=UnrightStr(message.id, prefixLength)
+	If (GetType(ud)<>#TABLE) Then Error("No data pointer in window userdata")
+	If message.attribute="Pressed"
+		Switch suffix
+			Case "ok":
+				editorDone(ud, True)
+			Case "cancel":
+				editorDone(ud, False)
+		EndSwitch
+	EndIf
+EndFunction
+
+/*
+**	Add Gadget
+**
+**	Adds a single gadget to the contents 
+**
+**	Note: To contain multiple gadgets a group must be added around it.
+*/
+Function window.addGadget(dest, type, app)
+	If (IsNil(RawGet(dest, contents)))
+		Local data=type:new(dest)
+		;type.editor(data)
+		dest["contents"]=data
+		type.beAdded(data)
+	Else
+		moai.Request("Need Group",
+			"Window contents is already occupied.\nCOnsider grouping the contents first.",
+			"OK", "Error")
+	EndIf
+EndFunction
+
+/*
+**	Be Added
+*/
+Function window.beAdded(data)
+	moai.DoMethod("tree_hierarchy", "InsertNode", data.id$,
+		data.parent.id$, "tail", "window "..data.id$)
+	moai.DoMethod("tree_hierarchy", "Open", data.id$)
+	Local uid$=moai.Get(data.id$, "UID")
+	treeitems[uid$]=data
+EndFunction
+
+/*
+**  Editor Method
+**
+**  Creates a graphical requester for RapaGUI window parameters
+**
+**  Note: Don't call on window.define or it will change the default values
+**      and those defaults won't be saved with the document.  Instead call
+**      this method on local copies created by the window:new() factory.
+*/
+Function window.editor(data)
+	;pass the data pointer to the static handler routine
+	moai.UserData=data
+	moai.CreateDialog(window.edit, "win")
+	moai.Set("win_id", "Text", data.id$)
+	moai.Set("win_title", "Text", data.title$)
+	moai.Set("win_width", "Text", data.width)
+	moai.Set("win_height", "Text", data.height)
+	moai.Set("win_size", "Selected", data.resizable)
+	moai.Set("win_drag", "Selected", data.draggable)
+	moai.Set("win_tool", "Selected", data.toolwindow)
+	moai.Set("win_close", "Selected", data.closegadget)
+	moai.DoMethod("win_req", "ShowModal")
+EndFunction
+
+/*
+**	EditorDone Method
+**
+**	Called by handler method when OK or Cancel have been clicked
+*/
+Function window.editorDone(data, ok)
+	If (ok)
+		data.id$=moai.Get("win_id", "Text")
+		data.title$=moai.Get("win_title", "Text")
+		data.width=moai.Get("win_width", "Text")
+		data.height=moai.Get("win_height", "Text")
+		data.resizable=moai.Get("win_size", "Selected")
+		data.draggable=moai.Get("win_drag", "Selected")
+		data.toolwindow=moai.Get("win_tool", "Selected")
+		data.closegadget=moai.Get("win_close", "Selected")
+	EndIf
+	moai.DoMethod("win_req", "EndModal", 0)
+EndFunction
+
+/*
+**	GenerateXML
+**
+**	Recursively generates XML output for this item and all itmes contained in it
+*/
+Function window.define:generateXML$(indention)
+	Local xml$=RepeatStr("\t",indention).."<window id=\""..self.id$..
+		"\" title=\""..self.title.."\" width=\""..self.width..
+		"\" height=\""..self.height.."\" dragbar=\""..
+		IIf(self.draggable,"True","False").."\" closegadget=\""..
+		IIf(self.closegadget,"True","False").."\" toolwindow\""..
+		IIf(self.toolwindow,"True","False").."\">\n"..
+		IIf(IsNil(self.content),"",content:generateXML(indention+1))..
+		RepeatStr("\t",indention).."</window>\n"
+	Return(xml$)
+EndFunction

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<application id="RapaEdit">
+	<menubar id="menu">
+		<menu title="File" id="mn_file">
+			<item id="mn_new" help="Start a new document">_New</item>
+			<item id="mn_open" help="Open an existing document">_Open</item>
+			<item id="mn_save" help="Save document to existing file">_Save</item>
+			<item id="mn_saveas" help="Save document to a new file">Save _As...</item>
+			<item />
+			<item id="mn_preview" help="Preview GUI">_Preview</item>
+			<item id="mn_export" help="Export to new Hollywood script">E_xport Script As...</item>
+			<item />
+			<item id="mn_quit" help="Exit the program">_Quit</item>
+		</menu>
+		<menu title="Gadget" id="mn_gadget">
+			<item id="mn_addgadget" help="Add a gadget to the current position" shortcut="Ctrl+Space">Add</item>
+			<item id="mn_editgadget" help="Edit the currently selected gadget" shortcut="Ctrl+Enter">Edit</item>
+			<item id="mn_removegadget" help="Remove the current gadget" shortcut="Ctrl+Backspace">Remove</item>
+			<item />
+			<item id="mn_upgadget" help="Move the gadget up" shortcut="Ctrl+Up">Move Up</item>
+			<item id="mn_downgadget" help="Move the gadget down" shortcut="Ctrl+Down">Move Down</item>
+		</menu>
+		<menu id="mn_template" title="Template">
+			<item id="mn_encapsulate" help="Convert group to template">Encapsulate _Group</item>
+			<item id="mn_opentemplate" help="Open a Template file">Open _Template</item>
+			<item id="mn_savetemplate" help="Save a Template as a file">Save Te_mplate as...</item>
+		</menu>
+		<menu title="About...">
+			<item id="mn_about" help="Information about RapaEdit">About RapaEdit</item>
+			<item id="mn_rapa" help="Information about RapaGUI plugin">About RapaGUI</item>
+		</menu>
+	</menubar>
+	<window id="win" title="RapaEdit" menubar="menu">
+		<vgroup>
+			<toolbar>
+				<button id="tb_new" icon="2">New</button>
+				<button />
+				<button id="tb_open" icon="3">Open</button>
+				<button id="tb_close" icon="4">Close</button>
+				<button />
+				<button id="tb_save" icon="5">Save</button>
+				<button id="tb_saveas" icon="6">Save As</button>
+				<button />
+				<button id="tb_addgadget" icon="7">Add</button>
+				<button id="tb_removegadget" icon="8">Remove</button>
+				<button id="tb_editgadget" icon="9">Edit</button>
+				<button />
+				<button id="tb_upgadget" icon="10">Move Up</button>
+				<button id="tb_downgadget" icon="11">Move Down</button>
+			</toolbar>
+			<hgroup>
+				<vgroup weight="1">
+					<button id="wa_window" icon="7" >Add Window</button>
+					<button id="wr_window" icon="8" >Remove Window</button>
+					<hline />
+					<button id="wa_dialog" icon="7" >Add Dialog</button>
+					<button id="wr_dialog" icon="8" >Remove Dialog</button>
+					<listview id="lv_gadgets" forcemode="listview">
+						<column sortable="1" />
+					</listview>
+				</vgroup>
+				<treeview id="tree_hierarchy" weight="15">
+					<column />
+				</treeview>
+			</hgroup>
+		</vgroup>
+	</window>
+</application>

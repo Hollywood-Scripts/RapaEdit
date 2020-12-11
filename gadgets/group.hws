@@ -1,0 +1,194 @@
+/*
+**  Groups.hws
+**
+**  Class that defines group constructs in RapaGUI
+**
+**  By Samuel D. Crow
+*/
+
+group={}
+group["count"]=0
+group["prefix$"]="grp_"
+group["kind$"]="group"
+group["edit$"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
+<dialog id="grp_req" title="group">
+	<vgroup>
+		<radio id="grp_kind">
+			<item>Vertical</item>
+			<item>Horizontal</item>
+			<item>Column</item>
+			<item>Scrolling</item>
+		</radio>
+		<colgroup columns="2">
+			<label>ID</label>
+			<textentry id="grp_id" reject="0123456789" />
+			<label>Title</label>
+			<textentry id="grp_title" />
+			<label>Columns</label>
+			<textentry id="grp_columns" accept="0123456789" />
+			<label>Horizontal Alignment</label>
+			<choice id="grp_halign">
+				<item>Default</item>
+				<item>Left</item>
+				<item>Center</item>
+				<item>Right<item>
+			</choice>
+			<label>Vertical Alignment</label>
+			<choice id="grp_valign">
+				<item>Default</item>
+				<item>Top</item>
+				<item>Center</item>
+				<item>Bottom</item>
+			</choice>
+			<label>Frame Title</label>
+			<textentry id="grp_frametitle" />
+		</colgroup>
+		<checkbox id="grp_frame">Framed</checkbox>
+		<checkbox id="grp_same">Uniform Spacing</checkbox>
+		<popcolor id="grp_color" title="Color" />
+		<hgroup>
+			<button id="grp_ok" icon="12">OK</button>
+			<button id="grp_cancel" icon="13">Cancel</button>
+		</hgroup>
+	</vgroup>
+</dialog>]]
+
+group["define"]={}
+group.define["kind"]=0
+group.define["subitems"]=0
+group.define["same"]=False
+group.define["frame"]=False
+group.define["frametitle$"]=""
+group.define["color"]=0
+group.define["title$"]=""
+group.define["columns"]=2
+group.define["halign"]=0
+group.define["valign"]=0
+
+
+/*
+**  Group Factory Method
+**
+**  Generates new group
+**
+**  Accepts parent class handle
+**
+**  Returns initialized table of an empty group
+*/
+Function group:new(parent)
+	local g=CopyTable(self.define)
+
+	;add parent and type links
+	g["parent"]=parent
+	g["type"]=group
+
+	;enumerate count
+	g["count"]=self.count
+	self.count=g.count+1
+
+	;set default ID
+	g["id$"]="grp"..StrStr(g.count)
+
+	return(g)
+EndFunction
+
+/*
+**	Group Destructor method
+**
+**	Removes group and all contents
+*/
+Function group.define:delete()
+	For x In self.contents Do x.delete()
+	moai.DoMethod("tree_hierarchy", "remove", self.id$)
+	self=Nil
+EndFunction
+
+/*
+**	Handler
+**
+**	message handler routine
+*/
+Function group.handler(message, prefixLength)
+	Local ud=RawGet(message, "userdata")
+	Local suffix=UnrightStr(message.id, prefixLength)
+	If (GetType(ud)<>#TABLE) Then Error("No self pointer in group userdata")
+	If message.attribute="Pressed"
+		Switch suffix
+			Case "ok":
+				editDone(ud, True)
+			Case "cancel":
+				editDone(ud, False)
+		EndSwitch
+	EndIf
+EndFunction
+
+/*
+**	Add Gadget
+**
+**	Adds a single gadget to the contents 
+*/
+Function group.addGadget(dest, type, app)
+	Local data=type:new(dest)
+	;type.editor(data)
+	If (IsNil(RawGet(dest, contents))) Then dest["contents"]={}
+	InsertItem(dest.contents, data)
+	type.beAdded(data)
+EndFunction
+
+/*
+**	Be Added
+*/
+Function group.beAdded(data)
+	moai.DoMethod("tree_hierarchy", "InsertNode", data.id$, data.parent.id$, "tail", "group "..data.id$)
+	moai.DoMethod("tree_hierarchy", "Open", data.id$)
+	Local uid$=moai.Get(data.id$, "UID")
+	treeitems[uid$]=data
+EndFunction
+
+/*
+**  Editor Method
+**
+**  Creates a graphical requester for RapaGUI group parameters
+**
+**  Note: Don't call on group.define or it will change the default values
+**      and those defaults won't be saved with the document.  Instead call
+**      this method on local copies created by the group:new() factory.
+*/
+Function group.editor(data)
+	moai.CreateDialog(group.edit$, "win")
+	moai.userdata=data
+	moai.Set("grp_kind", "Active", data.kind)
+	moai.Set("grp_columns", "Text", data.columns)
+	moai.Set("grp_title", "Text", data.title$)
+	moai.Set("grp_frametitle", "Text", data.frametitle$)
+	moai.Set("grp_frame", "Selected", data.frame)
+	moai.Set("grp_same", "Selected", data.same)
+	moai.Set("grp_color", "RGB", data.color)
+	moai.Set("grp_id", "Text", data.id)
+	moai.Set("grp_halign", "Active", data.halign)
+	moai.Set("grp_valign", "Active", data.valign)
+	moai.DoMethod("grp_req", "ShowModal")
+EndFunction
+
+/*
+**	Editor Done Method
+**
+**	processes input when OK or Cancel button pressed
+**
+**	Note: Invoke only on cloned copies created by group:new() factory.
+*/
+Function group.editorDone(data, ok)
+	If (ok)
+		data.kind=moai.Get("grp_kind", "Active")
+		data.columns=moai.Get("grp_columns", "Text")
+		data.title$=moai.Get("grp_title", "Text")
+		data.frametitle$=moai.Get("grp_frametitle", "Text")
+		data.frame=moai.Get("grp_frame", "Selected")
+		data.same=moai.Get("grp_same", "Selected")
+		data.color=moai.Get("grp_color", "RGB")
+		data.id=moai.Get("grp_id", "Text")
+		data.halign=moai.Get("grp_halign", "Active")
+		data.valign=moai.Get("grp_valign", "Active")
+	EndIf
+	moai.DoMethod("grp_req", "EndModal", 0)
+EndFunction

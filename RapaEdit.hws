@@ -1,0 +1,280 @@
+/*
+**  RapaEdit
+**
+**  By Samuel D. Crow
+*/
+@VERSION 8,0
+
+@REQUIRE "RapaGUI",{version=1,revision=2}
+
+@FILE 1, "RapaEdit.xml"
+@BRUSH 2, "icons/new.png", {LoadAlpha=True}
+@BRUSH 3, "icons/open.png", {LoadAlpha=True}
+@BRUSH 4, "icons/close.png", {LoadAlpha=True}
+@BRUSH 5, "icons/save.png", {LoadAlpha=True}
+@BRUSH 6, "icons/saveas.png", {LoadAlpha=True}
+@BRUSH 7, "icons/add.png", {LoadAlpha=True}
+@BRUSH 8, "icons/remove.png", {LoadAlpha=True}
+@BRUSH 9, "icons/treeview.png", {LoadAlpha=True}
+@BRUSH 10, "icons/moveup.png", {LoadAlpha=True}
+@BRUSH 11, "icons/movedown.png", {LoadAlpha=True}
+@BRUSH 12, "icons/ok.png", {LoadAlpha=True}
+@BRUSH 13, "icons/cancel.png", {LoadAlpha=True}
+
+;Import external classes
+@INCLUDE "gadgets/window.hws"
+@INCLUDE "gadgets/group.hws"
+
+/*****Global Variables*****/
+Global prefixes={}
+Global application={}
+application["unsaved"]=False
+application["count"]=0
+application["kind$"]="application"
+Global gadgetclasses={}
+gadgetclasses["group"]=group
+Global treeitems={}
+/*****Global Functions*****/
+
+Function p_Hierarchy(message, prefixLength)
+	Local suffix=UnrightStr(message.id, prefixLength)
+	DebugPrint(sufix)
+EndFunction
+
+Function p_GadSelect(message, prefixLength)
+	Local suffix=UnrightStr(message.id, prefixLength)
+	DebugPrint(sufix)
+EndFunction
+	
+/*
+**	Get Type
+**
+**	Returns type name as a string and user data table
+*/
+Function p_GetType(current$)
+	Local uid$=moai.Get(current$, "UID")
+	Local ud=RawGet(treeitems, uid$)
+	Assert(Not IsNil(ud))
+	Assert(GetType(ud)=#TABLE)
+	Return(ud.type["kind$"], ud)
+EndFunction
+
+/*
+**	Add Gadget
+*/
+Function p_AddGadget(appParent, current$)
+	Local class=RawGet(gadgetclasses, current$)
+	Assert(Not IsNil(class))
+	Local parent$=moai.Get("tree_hierarchy", "Active")
+	If (parent$="off")
+		moai.Request("Unselected", "Nowhere to put gadget", "OK", "Error")
+		Return
+	EndIf
+	Local temp$, data = p_GetType(parent$)
+	Local dest=data.type
+	Assert(Not IsNil(dest))
+	dest.AddGadget(data, class, appParent)
+EndFunction
+
+/*
+**	Start Editor
+**
+**	Starts editor function on selected gadget
+*/
+Function p_StartEditor()
+	Local current$=moai.Get("tree_hierarchy", "Active")
+	If (current$="off") Then Return
+	Local temp,num = SplitStr(current$, " ")
+	Assert(num=2)
+	Local class=RawGet(gadgetclasses, temp[0])
+	Assert(Not IsNil(class))
+	Local data=moai.Get(temp[1], "UserData")
+	class.editor(data)
+EndFunction
+
+/*
+**	Add App
+*/
+Function p_AddApp()
+	Local data={}
+	data["id$"]="app"..StrStr(appCount)
+	appCount=appCount+1
+	data["type"]=application
+	data["encoding"]="utf8"
+	moai.DoMethod("tree_hierarchy", "InsertNode", data.id$, "root", "tail", "application "..data.id$)
+	moai.DoMethod("tree_hierarchy", "Open", data.id$)
+	treeitems[moai.Get(data.id$, "UID")]=data
+EndFunction
+
+/*
+** Process Menu and Toolbar events
+*/
+Function p_MenuToolBar(msg, len)
+	Local prefix$=LeftStr(msg.id, len)
+	Switch msg.attribute
+		Case "Pressed":
+			Assert(prefix$="tb_")
+		Case "Selected":
+			Assert(prefix="mn_")
+		Default:
+			; Should be unreachable
+			moai.Request("Error", "p_MenuToolbar is incorrect handler", "OK", "Error")
+			End
+	EndSwitch
+	Local suffix$=UnrightStr(msg.id, len)
+	DebugPrint(suffix$)
+	Switch suffix$
+		Case "quit":
+			;TODO Check for unsaved document
+			End
+		Case "encapsulate":
+			;TODO Replace this with actual Template functionality
+			moai.Request("Template", "Encapsulate selected", "OK", "Information")
+		Case "rapa":
+			moai.DoMethod("RapaEdit", "AboutRapaGUI")
+		Case "about":
+			moai.Request("About", "RapaEdit\nBy Samuel D. Crow", "OK")
+		Case "edit":
+			p_StartEditor()
+		Case "addgadget":
+			Local type$=moai.Get("tree_hierarchy", "Active")
+			If (type$="off")
+				moai.Request("No Destination", "No destination of where to add the gadget is selected", "OK", "Error")
+				Return
+			EndIf
+			Local temp$, data=p_GetType(type$)
+			Switch (temp$)
+				Case "application":
+					moai.Request("Application", "Applications can only hold windows and dialogs.", "OK", "Error")
+					Return
+				Default:
+					Local current=moai.Get("lv_gadgets", "Active")
+					If (GetType(current)=#STRING)
+						moai.Request("No Gadget", "No selected gadget to add", "OK", "Error")
+						Return
+					EndIf
+					p_AddGadget(data.parent, moai.DoMethod("lv_gadgets", "GetEntry", current))
+			EndSwitch
+		Case "new":
+			p_AddApp()
+	EndSwitch
+EndFunction
+
+/*
+**	Global Event Handler
+*/
+Function p_ProcessGUI(message)
+	Switch message.action
+		Case "RapaGUI":
+			Local prefixLength=FindStr(message.id, "_")+1
+			Assert(prefixLength>0)
+			;Check for Local prefixes and event handlers
+			Local prefix$=LeftStr(message.id, prefixLength)
+			Local handler=RawGet(prefixes, prefix$)
+			Assert(Not IsNil(handler))
+			;Invoke local event handler from class
+			handler(message, prefixLength)
+	EndSwitch
+EndFunction
+
+Function p_WindowWash()
+	moai.Request("Window Type", "No application selected", "OK", "Error")
+EndFunction
+
+/*
+**	Add Window
+**
+**	Adds windows and requesters to an application document
+*/
+Function p_AddWindow(msg, len)
+	Local current$=moai.Get("tree_hierarchy", "Active")
+	If (current$="off")
+		p_WindowWash()
+		Return
+	EndIf
+	Local temp$, data = p_GetType(current$)
+	If (temp$<>"application")
+		p_WindowWash()
+		Return
+	EndIf
+	Switch (UnrightStr(msg.id, len))
+		Case "window":
+			Local win=window:new(data)
+			window.BeAdded(win)
+		Case "dialog":
+			;TODO AddDialog
+	EndSwitch
+EndFunction
+
+/*
+**	Remove Window 
+**
+**	Removes windows or dialog definitions
+*/
+Function p_RemWindow(msg, len)
+	Local current$=moai.Get("tree_hierarchy", "Active")
+	Local kind$=UnrightStr(msg.id, len)
+	If (current$="off")
+		moai.Request("Type", "No "..kind$.." selected", "OK", "Error")
+		Return
+	EndIf
+	Local udtype$, ud=p_GetType(current$)
+	If (udtype$<>kind$)
+		moai.Request("Error", kind$.." expected but "..udtype$.." selected", "OK", "Error")
+		Return
+	EndIf
+	Local r=moai.Request("Deleting "..kind$, "Deleting "..kind$.." named: "..ud.id$..
+		"\nAll gadgets contained in it will be deleted also.", "OK|Cancel", "Warning")
+	If (r>0) Then ud:delete()
+EndFunction
+
+/*****Local Procedure for Application class *****/
+
+/*
+**	Handler
+**
+**	Handles input from edit requester
+*/
+Function application.handler(message, prefixLength)
+	Local ud=RawGet("message", "userdata")
+	Assert(Not IsNil(ud))
+	Local suffix=UnrightStr(message.id, prefixLength)
+	Assert(GetType(ud)=#TABLE)
+	If message.attribute="Pressed"
+		Switch suffix
+			Case "ok":
+				editorDone(ud, True)
+			Case "cancel":
+				editorDone(ud, False)
+		EndSwitch
+	EndIf
+EndFunction
+
+/*****Initialization*****/
+moai.CreateApp(ReadString(1))
+
+;populate gadget list and prefix registry
+For i$,j In Pairs(gadgetclasses)
+	moai.DoMethod("lv_gadgets", "Insert", "Sorted", i$)
+	prefixes[j["prefix$"]]=j.handler
+Next
+
+;not listed in gadget because each applicaiton is a new document
+gadgetclasses["application"]=application
+;also not listed because windows and dialogs can only be added to applications
+gadgetclasses["window"]=window
+
+;add global prefixes to registry
+prefixes["mn_"]=p_MenuToolBar
+prefixes["tb_"]=p_MenuToolBar
+prefixes["tree_"]=p_Hierarchy
+prefixes["lv_"]=p_GadSelect
+prefixes["wa_"]=p_AddWindow
+prefixes["wr_"]=p_RemWindow
+
+InstallEventHandler({RapaGUI=p_ProcessGUI})
+
+/*****Event Loop*****/
+Repeat
+	WaitEvent
+Forever
