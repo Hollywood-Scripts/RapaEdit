@@ -64,7 +64,11 @@ group.define["title$"]=""
 group.define["columns"]=2
 group.define["halign"]=0
 group.define["valign"]=0
-
+group.define["children"]=0
+/*
+**	Note:  Children of a group have a reserved item called "slot" that holds
+**		position data for the parent group
+*/
 
 /*
 **  Group Factory Method
@@ -135,7 +139,9 @@ Function group.addGadget(dest, type)
 	Local data=type:new(dest)
 	;type.editor(data)
 	If (IsNil(RawGet(dest, contents))) Then dest["contents"]={}
-	InsertItem(dest.contents, data)
+	dest.contents[dest.children]=data
+	data[slot]=dest.children
+	dest.children=dest.children+1
 	type.beAdded(data)
 EndFunction
 

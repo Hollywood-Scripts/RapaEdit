@@ -10,9 +10,6 @@ Global application={}
 application["count"]=0
 application["kind$"]="application"
 
-application["define"]={}
-application.define["saved"]=False
-
 /*
 **	Application factory method
 */
@@ -20,11 +17,18 @@ Function application:new()
 	Local data={}
 	data["id$"]="app"..StrStr(self.count)
 	self.count=self.count+1
-    data["type"]=application
-    data["application"]=self
+	data["type"]=application
+	data["application"]=self
 	data["encoding"]="utf8"
+/*
+**	Note:  Children of applications have a reserved item called "slot" that
+**		holds enumeration data for the parent application
+*/
+	data["children"]=0
+	data["saved"]=False
 	moai.DoMethod("tree_hierarchy", "InsertNode", data.id$, "root", "tail", "application "..data.id$)
 	moai.DoMethod("tree_hierarchy", "Open", data.id$)
+	moai.Set("tree_hierarchy", "Active", data.id$)
 	treeitems[moai.Get(data.id$, "UID")]=data
 EndFunction
 
@@ -34,7 +38,7 @@ EndFunction
 **  Add a window or dialog 
 */
 Function application.AddWindow(msg, len)
-    Local current$=moai.Get("tree_hierarchy", "Active")
+	Local current$=moai.Get("tree_hierarchy", "Active")
 	If (current$="off")
 		p_WindowWash()
 		Return
@@ -44,13 +48,20 @@ Function application.AddWindow(msg, len)
 		p_WindowWash()
 		Return
 	EndIf
+	Local child
 	Switch (UnrightStr(msg.id, len))
 		Case "window":
-			Local win=window:new(data)
-			window.BeAdded(win)
-		Case "dialog":
-			;TODO AddDialog
+			child=window:new(data)
+		;Case "dialog":
+			;child=dialog:new(data)
+		Default:
+			Return
 	EndSwitch
+	If (IsNil(RawGet(data, "contents"))) Then data["contents"]={}
+	data.contents[data.children]=child
+	child["slot"]=data.children
+	data.children=data.children+1
+	child.type.BeAdded(child)
 EndFunction
 
 /*
@@ -72,7 +83,14 @@ Function application.RemWindow(msg, len)
 	EndIf
 	Local r=moai.Request("Deleting "..kind$, "Deleting "..kind$.." named: "..ud.id$..
 		"\nAll gadgets contained in it will be deleted also.", "OK|Cancel", "Warning")
-	If (r>0) Then ud:delete()
+	If (r>0)
+		;shuffle down contents removing ud
+		Local dad=ud.parent
+		dad.contents[ud.slot]=dad.contents[dad.children]
+		dad.contents[dad.children]=Nil
+		dad.children=dad.children-1
+		ud:delete()
+	EndIf
 EndFunction
 
 /*
