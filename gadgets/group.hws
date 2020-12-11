@@ -80,6 +80,7 @@ Function group:new(parent)
 
 	;add parent and type links
 	g["parent"]=parent
+	g["application"]=parent.application
 	g["type"]=group
 
 	;enumerate count
@@ -98,7 +99,10 @@ EndFunction
 **	Removes group and all contents
 */
 Function group.define:delete()
-	For x In self.contents Do x.delete()
+	Local nested=RawGet(self, contents)
+	If (Not IsNil(nested))
+		For x In nested Do x:delete()
+	EndIf
 	moai.DoMethod("tree_hierarchy", "remove", self.id$)
 	self=Nil
 EndFunction
@@ -109,7 +113,7 @@ EndFunction
 **	message handler routine
 */
 Function group.handler(message, prefixLength)
-	Local ud=RawGet(message, "userdata")
+	Local ud=RawGet(message, "UserData")
 	Local suffix=UnrightStr(message.id, prefixLength)
 	If (GetType(ud)<>#TABLE) Then Error("No self pointer in group userdata")
 	If message.attribute="Pressed"
@@ -127,7 +131,7 @@ EndFunction
 **
 **	Adds a single gadget to the contents 
 */
-Function group.addGadget(dest, type, app)
+Function group.addGadget(dest, type)
 	Local data=type:new(dest)
 	;type.editor(data)
 	If (IsNil(RawGet(dest, contents))) Then dest["contents"]={}

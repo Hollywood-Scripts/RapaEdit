@@ -58,6 +58,7 @@ Function window:new(app)
 
 	; add parent and type link
 	w["parent"]=app
+	w["application"]=app.application
 	w["type"]=window
 
 	;enumerate count from static variable
@@ -109,8 +110,8 @@ EndFunction
 **
 **	Note: To contain multiple gadgets a group must be added around it.
 */
-Function window.addGadget(dest, type, app)
-	If (IsNil(RawGet(dest, contents)))
+Function window.addGadget(dest, type)
+	If (IsNil(RawGet(dest, "contents")))
 		Local data=type:new(dest)
 		;type.editor(data)
 		dest["contents"]=data

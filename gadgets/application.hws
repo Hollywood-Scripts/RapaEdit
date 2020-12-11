@@ -1,0 +1,96 @@
+/*
+**  Application.hws
+**
+**  An application gadget class for RapaEdit
+**
+**  By Samuel D. Crow
+*/
+
+Global application={}
+application["count"]=0
+application["kind$"]="application"
+
+application["define"]={}
+application.define["saved"]=False
+
+/*
+**	Application factory method
+*/
+Function application:new()
+	Local data={}
+	data["id$"]="app"..StrStr(self.count)
+	self.count=self.count+1
+    data["type"]=application
+    data["application"]=self
+	data["encoding"]="utf8"
+	moai.DoMethod("tree_hierarchy", "InsertNode", data.id$, "root", "tail", "application "..data.id$)
+	moai.DoMethod("tree_hierarchy", "Open", data.id$)
+	treeitems[moai.Get(data.id$, "UID")]=data
+EndFunction
+
+/*
+**  Add Window
+**
+**  Add a window or dialog 
+*/
+Function application.AddWindow(msg, len)
+    Local current$=moai.Get("tree_hierarchy", "Active")
+	If (current$="off")
+		p_WindowWash()
+		Return
+	EndIf
+	Local temp$, data = p_GetType(current$)
+	If (temp$<>"application")
+		p_WindowWash()
+		Return
+	EndIf
+	Switch (UnrightStr(msg.id, len))
+		Case "window":
+			Local win=window:new(data)
+			window.BeAdded(win)
+		Case "dialog":
+			;TODO AddDialog
+	EndSwitch
+EndFunction
+
+/*
+**	Remove Window 
+**
+**	Removes windows or dialog definitions
+*/
+Function application.RemWindow(msg, len)
+	Local current$=moai.Get("tree_hierarchy", "Active")
+	Local kind$=UnrightStr(msg.id, len)
+	If (current$="off")
+		moai.Request("Type", "No "..kind$.." selected", "OK", "Error")
+		Return
+	EndIf
+	Local udtype$, ud=p_GetType(current$)
+	If (udtype$<>kind$)
+		moai.Request("Error", kind$.." expected but "..udtype$.." selected", "OK", "Error")
+		Return
+	EndIf
+	Local r=moai.Request("Deleting "..kind$, "Deleting "..kind$.." named: "..ud.id$..
+		"\nAll gadgets contained in it will be deleted also.", "OK|Cancel", "Warning")
+	If (r>0) Then ud:delete()
+EndFunction
+
+/*
+**	Handler
+**
+**	Handles input from edit requester
+*/
+Function application.handler(message, prefixLength)
+	Local ud=RawGet("message", "userdata")
+	Assert(Not IsNil(ud))
+	Local suffix=UnrightStr(message.id, prefixLength)
+	Assert(GetType(ud)=#TABLE)
+	If message.attribute="Pressed"
+		Switch suffix
+			Case "ok":
+				editorDone(ud, True)
+			Case "cancel":
+				editorDone(ud, False)
+		EndSwitch
+	EndIf
+EndFunction
