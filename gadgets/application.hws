@@ -16,17 +16,16 @@ application["kind$"]="application"
 Function application:new()
 	Local data={}
 	data["id$"]="app"..StrStr(self.count)
+	data["name$"]=data.id$
 	self.count=self.count+1
 	data["type"]=application
 	data["application"]=self
 	data["encoding"]="utf8"
-/*
-**	Note:  Children of applications have a reserved item called "slot" that
-**		holds enumeration data for the parent application
-*/
+	;Note:  Children of applications have a reserved item called "slot" that
+	;	holds enumeration data for the parent application
 	data["children"]=0
 	data["saved"]=False
-	moai.DoMethod("tree_hierarchy", "InsertNode", data.id$, "root", "tail", "application "..data.id$)
+	moai.DoMethod("tree_hierarchy", "InsertNode", data.id$, "root", "tail", "application "..data.name$)
 	moai.DoMethod("tree_hierarchy", "Open", data.id$)
 	moai.Set("tree_hierarchy", "Active", data.id$)
 	treeitems[moai.Get(data.id$, "UID")]=data
@@ -86,29 +85,71 @@ Function application.RemWindow(msg, len)
 	If (r>0)
 		;shuffle down contents removing ud
 		Local dad=ud.parent
-		dad.contents[ud.slot]=dad.contents[dad.children]
-		dad.contents[dad.children]=Nil
 		dad.children=dad.children-1
+		If (ud.slot<>dad.children) Then dad.contents[ud.slot]=dad.contents[dad.children]
+		dad.contents[dad.children]=Nil
 		ud:delete()
 	EndIf
 EndFunction
 
 /*
-**	Handler
+**	Editor
 **
-**	Handles input from edit requester
+**	Allows name of application to be changed
 */
-Function application.handler(message, prefixLength)
-	Local ud=RawGet("message", "userdata")
-	Assert(Not IsNil(ud))
-	Local suffix=UnrightStr(message.id, prefixLength)
-	Assert(GetType(ud)=#TABLE)
-	If message.attribute="Pressed"
-		Switch suffix
-			Case "ok":
-				editorDone(ud, True)
-			Case "cancel":
-				editorDone(ud, False)
-		EndSwitch
+Function application.editor(data)
+	Global ModalUserData=data
+	moai.CreateDialog([[<?xml version="1.0" encoding="iso-8859-1"?>
+		<dialog id="app_req" title="Application">
+			<vgroup>
+				<radio id="app_encode" title="Encoding">
+					<item>UTF8</item>
+					<item>ISO-8859-1</item>
+				<radio>
+				<textentry id="app_name" />
+				<hgroup>
+					<button id="app_ok" icon="12" >OK</button>
+					<button id="app_cancel" icon="13" >Cancel</button>
+				</hgroup>
+			</vgroup>
+		</dialog>
+	]], "win")
+	moai.Set("app_name", "text", data.name$)
+	moai.DoMethod("app_req", "ShowModal")
+EndFunction
+
+/*
+**	Copy Back
+**
+**	OK Pressed so copy back from the dialog
+*/
+Function application.CopyBack()
+	ModalUserData.name$=moai.Get("app_name", "text")
+	ModalUserData.encoding=IIF(moai.Get("app_encode", "Active")=1, "iso-8859-1", "utf8")
+	moai.Set(ModalUserData.id$, "Name", "application "..ModalUserData.name$)
+EndFunction
+
+/*
+**	EditorDone
+**
+**	Finish up requester
+*/
+Function application.editorDone()
+	moai.DoMethod("app_req", "EndModal", 0)
+EndFunction
+
+Function application.GenerateXML$()
+	Local tree$=moai.Get("tree_hierarchy", "Active")
+	If (tree$="off")
+		moai.Request("Unselected", "No Application is selected", "OK", "Error")
+		Return
 	EndIf
+	Local temp$, data=p_GetType(tree$)
+	Local XML$="<?xml version=\"1.0\" encoding=\""..data.encoding.."\"?>\n"..
+		"<application id=\""..data.name.."\">\n"
+	For x, y In data.contents
+		XML$=XML$..y.GenerateXML$(1)
+	Next
+	XML$=XML$.."</application>\n"
+	Return(XML$)
 EndFunction

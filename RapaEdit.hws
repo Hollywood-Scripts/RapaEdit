@@ -130,14 +130,39 @@ Function p_MenuToolBar(msg, len)
 		Case "rapa":
 			moai.DoMethod("RapaEdit", "AboutRapaGUI")
 		Case "about":
-			moai.Request("About", "RapaEdit\nBy Samuel D. Crow", "OK")
-		Case "edit":
+			moai.Request("About", "RapaEdit\nBy Samuel D. Crow", "OK", "Information")
+		Case "editgadget":
 			p_StartEditor()
 		Case "addgadget":
 			p_AddGadget()
 		Case "new":
 			application:new()
+		Case "export":
+			application.GenerateXML$()
 	EndSwitch
+EndFunction
+
+/*
+**	Handler
+**
+**	Handles input from edit requester
+*/
+Function p_handler(message, prefixLength)
+	Local suffix=UnrightStr(message.id, prefixLength)
+	Assert(Not IsNil(ModalUserData))
+	Assert(GetType(ModalUserData)=#TABLE)
+	Local type=ModalUserData.type
+	If message.attribute="Pressed"
+		Switch(suffix) FallThrough
+			Case "ok":
+				type.CopyBack()
+			Case "cancel":
+				type.editorDone()
+			Default:
+				Break;
+		EndSwitch
+	EndIf
+	ModalUserData=Nil
 EndFunction
 
 /*
@@ -147,11 +172,11 @@ Function p_ProcessGUI(message)
 	Switch message.action
 		Case "RapaGUI":
 			Local prefixLength=FindStr(message.id, "_")+1
-			Assert(prefixLength>0)
+			Assert(prefixLength>1)
 			;Check for Local prefixes and event handlers
 			Local prefix$=LeftStr(message.id, prefixLength)
 			Local handler=RawGet(prefixes, prefix$)
-			Assert(Not IsNil(handler))
+			DebugPrint("prefix="..prefix$)
 			;Invoke local event handler from class
 			handler(message, prefixLength)
 	EndSwitch
@@ -167,7 +192,11 @@ moai.CreateApp(ReadString(1))
 ;populate gadget list and prefix registry
 For i$,j In Pairs(gadgetclasses)
 	moai.DoMethod("lv_gadgets", "Insert", "Sorted", i$)
-	prefixes[j["prefix$"]]=j.handler
+	If (Not IsNil(RawGet(j, "handler")))
+		prefixes[j["prefix$"]]=j.handler
+	Else
+		prefixes[j["prefix$"]]=p_handler
+	EndIf
 Next
 
 ;not listed in gadget because each applicaiton is a new document
@@ -176,6 +205,8 @@ gadgetclasses["application"]=application
 gadgetclasses["window"]=window
 
 ;add global prefixes to registry
+prefixes["win_"]=p_handler
+prefixes["app_"]=p_handler
 prefixes["mn_"]=p_MenuToolBar
 prefixes["tb_"]=p_MenuToolBar
 prefixes["tree_"]=p_Hierarchy

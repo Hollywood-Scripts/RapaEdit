@@ -34,7 +34,6 @@ window["edit$"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
 </dialog>]]
 
 window["define"]={}
-window.define["title$"]=""
 window.define["width"]=800
 window.define["height"]=600
 window.define["resizable"]=True
@@ -67,6 +66,8 @@ Function window:new(app)
 
 	;set default id
 	w["id$"]="win"..StrStr(w.count)
+	w["title$"]=w.id$
+	w["name$"]=w.id$
 
 	Return(w)
 EndFunction
@@ -82,25 +83,6 @@ Function window.define:delete()
 	treeitems[uid$]=Nil
 	moai.DoMethod("tree_hierarchy", "Remove", self.id$)
 	self=Nil
-EndFunction
-
-/*
-**	Handler
-**
-**	Handles input from edit requester
-*/
-Function window.handler(message, prefixLength)
-	Local ud=RawGet(message, "userdata")
-	Local suffix=UnrightStr(message.id, prefixLength)
-	If (GetType(ud)<>#TABLE) Then Error("No data pointer in window userdata")
-	If message.attribute="Pressed"
-		Switch suffix
-			Case "ok":
-				editorDone(ud, True)
-			Case "cancel":
-				editorDone(ud, False)
-		EndSwitch
-	EndIf
 EndFunction
 
 /*
@@ -128,7 +110,7 @@ EndFunction
 */
 Function window.beAdded(data)
 	moai.DoMethod("tree_hierarchy", "InsertNode", data.id$,
-		data.parent.id$, "tail", "window "..data.id$)
+		data.parent.id$, "tail", "window "..data.name$)
 	moai.DoMethod("tree_hierarchy", "Open", data.id$)
 	Local uid$=moai.Get(data.id$, "UID")
 	treeitems[uid$]=data
@@ -145,9 +127,8 @@ EndFunction
 */
 Function window.editor(data)
 	;pass the data pointer to the static handler routine
-	moai.UserData=data
-	moai.CreateDialog(window.edit, "win")
-	moai.Set("win_id", "Text", data.id$)
+	moai.CreateDialog(window.edit$, "win")
+	moai.Set("win_id", "Text", data.name$)
 	moai.Set("win_title", "Text", data.title$)
 	moai.Set("win_width", "Text", data.width)
 	moai.Set("win_height", "Text", data.height)
@@ -155,7 +136,25 @@ Function window.editor(data)
 	moai.Set("win_drag", "Selected", data.draggable)
 	moai.Set("win_tool", "Selected", data.toolwindow)
 	moai.Set("win_close", "Selected", data.closegadget)
+	Global ModalUserData=data
 	moai.DoMethod("win_req", "ShowModal")
+EndFunction
+
+/*
+**	CopyBack
+**
+**	Processes buffer when OK pressed
+*/
+Function window.CopyBack()
+	ModalUserData.name$=moai.Get("win_id", "Text")
+	ModalUserData.title$=moai.Get("win_title", "Text")
+	ModalUserData.width=moai.Get("win_width", "Text")
+	ModalUserData.height=moai.Get("win_height", "Text")
+	ModalUserData.resizable=moai.Get("win_size", "Selected")
+	ModalUserData.draggable=moai.Get("win_drag", "Selected")
+	ModalUserData.toolwindow=moai.Get("win_tool", "Selected")
+	ModalUserData.closegadget=moai.Get("win_close", "Selected")
+	moai.Set(ModalUserData.id$, "Name", "window "..ModalUserData.name$)
 EndFunction
 
 /*
@@ -163,17 +162,7 @@ EndFunction
 **
 **	Called by handler method when OK or Cancel have been clicked
 */
-Function window.editorDone(data, ok)
-	If (ok)
-		data.id$=moai.Get("win_id", "Text")
-		data.title$=moai.Get("win_title", "Text")
-		data.width=moai.Get("win_width", "Text")
-		data.height=moai.Get("win_height", "Text")
-		data.resizable=moai.Get("win_size", "Selected")
-		data.draggable=moai.Get("win_drag", "Selected")
-		data.toolwindow=moai.Get("win_tool", "Selected")
-		data.closegadget=moai.Get("win_close", "Selected")
-	EndIf
+Function window.editorDone()
 	moai.DoMethod("win_req", "EndModal", 0)
 EndFunction
 
