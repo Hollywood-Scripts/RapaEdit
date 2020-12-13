@@ -134,10 +134,23 @@ EndFunction
 */
 Function group.beAdded(data)
 	moai.DoMethod("tree_hierarchy", "InsertNode", data.id$,
-		data.parent.id$, "tail", "group "..data.name$)
+		data.parent.id$, "tail", "vgroup "..data.name$)
 	moai.DoMethod("tree_hierarchy", "Open", data.id$)
 	Local uid$=moai.Get(data.id$, "UID")
 	treeitems[uid$]=data
+EndFunction
+
+function group.define:header$()
+	Switch (self.kind)
+		Case 0:
+			Return("vgroup ")
+		Case 1:
+			Return("hgroup ")
+		Case 2:
+			Return("colgroup ")
+		Case 3:
+			Return("scrollgroup ")
+	EndSwitch
 EndFunction
 
 /*
@@ -177,7 +190,8 @@ Function group.CopyBack()
 	ModalUserData.name$=moai.Get("grp_id", "Text")
 	ModalUserData.halign=moai.Get("grp_halign", "Active")
 	ModalUserData.valign=moai.Get("grp_valign", "Active")
-	moai.Set(ModalUserData.id$, "Name", "group "..ModalUserData.name$)
+	moai.Set(ModalUserData.id$,
+		"Name", ModalUserData:header$()..ModalUserData.name$)
 EndFunction
 
 /*
