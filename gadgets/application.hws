@@ -114,7 +114,7 @@ Function application.editor(data)
 			</vgroup>
 		</dialog>
 	]], "win")
-	moai.Set("app_encode", "Active", IIF(data.encoding="utf8",0,1))
+	moai.Set("app_encode", "Active", IIf(data.encoding="utf8",0,1))
 	moai.Set("app_name", "text", data.name$)
 	moai.DoMethod("app_req", "ShowModal")
 EndFunction

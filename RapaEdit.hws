@@ -158,11 +158,11 @@ Function p_handler(message, prefixLength)
 				type.CopyBack()
 			Case "cancel":
 				type.editorDone()
+				ModalUserData=Nil
 			Default:
-				Break;
+				Break
 		EndSwitch
 	EndIf
-	ModalUserData=Nil
 EndFunction
 
 /*
