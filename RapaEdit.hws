@@ -24,6 +24,7 @@
 ;Import external classes
 @INCLUDE "gadgets/application.hws"
 @INCLUDE "gadgets/window.hws"
+@INCLUDE "gadgets/dialog.hws"
 @INCLUDE "gadgets/group.hws"
 
 /*****Global Variables*****/
@@ -36,6 +37,7 @@ Global treeitems={}
 Function p_Hierarchy(message, prefixLength)
 	Local suffix=UnrightStr(message.id, prefixLength)
 	DebugPrint(sufix)
+	If (suffix="deselect") Then moai.Set("tree_hierarchy", "active", "off")
 EndFunction
 
 Function p_GadSelect(message, prefixLength)
@@ -112,7 +114,7 @@ Function p_MenuToolBar(msg, len)
 		Case "Pressed":
 			Assert(prefix$="tb_")
 		Case "Selected":
-			Assert(prefix="mn_")
+			Assert(prefix$="mn_")
 		Default:
 			; Should be unreachable
 			moai.Request("Error", "p_MenuToolbar is incorrect handler", "OK", "Error")
@@ -195,6 +197,7 @@ For i$,j In Pairs(gadgetclasses)
 	If (Not IsNil(RawGet(j, "handler")))
 		prefixes[j["prefix$"]]=j.handler
 	Else
+		; Default to p_handler if no type-specific handler is specified
 		prefixes[j["prefix$"]]=p_handler
 	EndIf
 Next
@@ -203,9 +206,11 @@ Next
 gadgetclasses["application"]=application
 ;also not listed because windows and dialogs can only be added to applications
 gadgetclasses["window"]=window
+gadgetclasses["dialog"]=dialog
 
 ;add global prefixes to registry
 prefixes["win_"]=p_handler
+prefixes["dlg_"]=p_handler
 prefixes["app_"]=p_handler
 prefixes["mn_"]=p_MenuToolBar
 prefixes["tb_"]=p_MenuToolBar

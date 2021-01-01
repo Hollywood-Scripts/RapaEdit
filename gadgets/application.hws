@@ -51,8 +51,8 @@ Function application.AddWindow(msg, len)
 	Switch (UnrightStr(msg.id, len))
 		Case "window":
 			child=window:new(data)
-		;Case "dialog":
-			;child=dialog:new(data)
+		Case "dialog":
+			child=dialog:new(data)
 		Default:
 			Return
 	EndSwitch

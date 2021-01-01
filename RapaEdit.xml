@@ -50,6 +50,8 @@
 			</toolbar>
 			<hgroup>
 				<vgroup weight="1">
+					<button id="tree_deselect">Deselect icon</button>
+					<hline />
 					<button id="wa_window" icon="7" >Add Window</button>
 					<button id="wr_window" icon="8" >Remove Window</button>
 					<hline />
