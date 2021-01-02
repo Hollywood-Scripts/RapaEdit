@@ -1,0 +1,103 @@
+/*
+**  rectangles.hws
+**
+**  Class that defines rectangle constructs in RapaGUI
+**
+**  By Samuel D. Crow
+*/
+
+rectangle={}
+rectangle["prefix$"]="rect_"
+rectangle["kind$"]="rectangle"
+rectangle["count"]=0
+
+rectangle["define"]={}
+
+/*
+**  rectangle Factory Method
+**
+**  Generates new rectangle
+**
+**  Accepts parent class handle
+**
+**  Returns initialized table of an empty rectangle
+*/
+Function rectangle:new(parent)
+	local r=CopyTable(self.define)
+
+	;add parent and type links
+	r["parent"]=parent
+	r["application"]=parent.application
+	r["type"]=rectangle
+	
+	;set id$ for tree manipulation only
+	r["id$"]="rect"..Strstr(rectangle.count)
+	rectangle.count=rectangle.count+1
+
+	return(r)
+EndFunction
+
+/*
+**	rectangle Destructor method
+**
+**	Removes rectangle and all contents
+*/
+Function rectangle.define.delete(self)
+	moai.DoMethod("tree_hierarchy", "remove", self.id$)
+	self=Nil
+EndFunction
+
+/*
+**	Add Gadget
+**
+**	Impossible to add gadget to leaf element
+*/
+Function rectangle.addGadget(dest, type)
+	moai.Request("Error","Impossible to add gadget to rectangle", "OK", "Error")
+EndFunction
+
+/*
+**	Be Added 
+**
+**	Add yourself to a parent gadget or window
+*/
+Function rectangle.beAdded(data)
+	moai.DoMethod("tree_hierarchy", "InsertLeaf", data.id$,
+		data.parent.id$, "tail", "Rectangle")
+	Local uid$=moai.Get(data.id$, "UID")
+	treeitems[uid$]=data
+EndFunction
+
+/*
+**  Editor Method
+**
+**  Creates a graphical requester indicating that rectangles can't be edited
+*/
+Function rectangle.editor(data)
+	moai.Request("Rectabgke", "Cannot edit a rectangle.", "OK", "Information")
+EndFunction
+
+/*
+**	Copy Back
+**
+**	Do nothing because nothing to edit
+*/
+Function rectangle.CopyBack()
+EndFunction
+
+/*
+**	Editor Done Function
+**
+**	Do nothing because requester modifies no fields
+*/
+Function rectangle.editorDone()
+EndFunction
+
+/*
+**	Generate XML
+**
+**	Generate XML code string for this recgangle
+*/
+Function rectangle.define.generateXML$(indention)
+	Return(RepeatStr("\t",indention).."<rectangle id=\""..self.id$.."\" />\n")	
+EndFunction

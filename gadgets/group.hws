@@ -202,3 +202,42 @@ EndFunction
 Function group.editorDone()
 	moai.DoMethod("grp_req", "EndModal", 0)
 EndFunction
+
+/*
+**	Generate XML
+**
+**	Generates XML code for group and all gadgets in it
+*/
+Function group.define.GenerateXML$(indention)
+	Local xml$
+	xml$=RepeatStr("\t",indention).."<"..self:header$()..
+		IIf(self.title$<>""," title=\""..self.title$.."\"","")..
+		IIf(self.frame," frame=\"true\""..
+			IIf(self.frametitle<>"", " frametitle=\"..self.frametitle..\"", ""), "")..
+		IIf(self.same, "same=\"true\"", "")..
+		" color=\""..self.color.."\" id=\""..self.id$.."\""..
+		IIf(self.kind=2, " columns=\""..self.columns.."\"", "")
+	Switch self.halign
+		Case 1:
+			xml$=xml$.." halign=\"left\""
+		Case 2:
+			xml$=xml$.." halign=\"center\""
+		Case 3:
+			xml$=xml$.." halign=\"right\""
+	EndSwitch
+	Switch self.valign
+		Case 1:
+			xml$=xml$.." valign=\"top\""
+		Case 2:
+			xml$=xml$.." valign=\"center\""
+		Case 3:
+			xml$=xml$.." valign=\"bottom\""
+	EndSwitch
+	xml$=xml$..">\n"
+	For x In self.contents
+		xml$=xml$+x.generateXML$(indention+1)
+	Next
+	xml$=xml$..RepeatStr("\t", indention).."</"..self.header$()..">\n"
+	Return(xml$)
+EndFunction
+

@@ -26,11 +26,13 @@
 @INCLUDE "gadgets/window.hws"
 @INCLUDE "gadgets/dialog.hws"
 @INCLUDE "gadgets/group.hws"
+@INCLUDE "gadgets/rectangle.hws"
 
 /*****Global Variables*****/
 Global prefixes={}
 Global gadgetclasses={}
 gadgetclasses["group"]=group
+gadgetclasses["rectangle"]=rectangle
 Global treeitems={}
 /*****Global Functions*****/
 

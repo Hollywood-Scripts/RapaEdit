@@ -127,7 +127,7 @@ EndFunction
 */
 Function dialog.editor(data)
 	;pass the data pointer to the static handler routine
-	moai.CreateDialog(dialog.edit$, "dlg")
+	moai.CreateDialog(dialog.edit$, "win")
 	moai.Set("dlg_id", "Text", data.name$)
 	moai.Set("dlg_title", "Text", data.title$)
 	moai.Set("dlg_width", "Text", data.width)
@@ -154,7 +154,7 @@ Function dialog.CopyBack()
 	ModalUserData.draggable=moai.Get("dlg_drag", "Selected")
 	ModalUserData.tooldialog=moai.Get("dlg_tool", "Selected")
 	ModalUserData.closegadget=moai.Get("dlg_close", "Selected")
-	moai.Set(ModalUserData.id$, "Name", "Dialog "..ModalUserData.name$)
+	moai.Set(ModalUserData.id$, "Name", "dialog "..ModalUserData.name$)
 EndFunction
 
 /*
