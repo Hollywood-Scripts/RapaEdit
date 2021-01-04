@@ -12,14 +12,16 @@ button["kind$"]="button"
 button["count"]=0
 button["edit"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
 <dialog id="btn_req" title="button">
-	<vgroup>
+	<colgroup columns="2">
+		<label>ID</label>
+		<textentry id="btn_id" />
 		<label>Label</label>
-		<textentry id="btn_label" markall="true" />
+		<textentry id="btn_label" />
 		<hgroup>
 			<button id="btn_ok" icon="12">OK</button>
 			<button id="btn_cancel" icon="13">Cancel</button>
 		</hgroup>
-	</vgroup>
+	</colgroup>
 </dialog>]]
 
 button["define"]={}
@@ -44,9 +46,12 @@ Function button:new(parent)
 	;set id$ for tree manipulation only
 	b["id$"]="btn"..Strstr(button.count)
 	button.count=button.count+1
+	
+	;Set Label and locla ID to their default
 	b["label$"]=b.id$
+	b["name$"]=b.id$
 
-	return(r)
+	return(b)
 EndFunction
 
 /*
@@ -75,7 +80,7 @@ EndFunction
 */
 Function button.beAdded(data)
 	moai.DoMethod("tree_hierarchy", "InsertLeaf", data.id$,
-		data.parent.id$, "tail", "button")
+		data.parent.id$, "tail", "button "..data.label$)
 	Local uid$=moai.Get(data.id$, "UID")
 	treeitems[uid$]=data
 EndFunction
@@ -88,8 +93,9 @@ EndFunction
 Function button.editor(data)
 	moai.CreateDialog(button.edit,"win")
 	moai.Set("btn_label", "text", data.label$)
+	moai.DoMethod("btn_label", "MarkAll")
 	Global ModalUserData=data
-	moai.DoMethod("btn_dlg", "ShowModal")
+	moai.DoMethod("btn_req", "ShowModal")
 EndFunction
 
 /*
@@ -98,8 +104,17 @@ EndFunction
 **	Do nothing because nothing to edit
 */
 Function button.CopyBack()
-	ModalSetUserData.label$=maoi.Get("btn_label", "text")
-	moai.Set(ModalUserData.id$, "Name", ModalSetUserData.label$)
+	Local current$=moai.Get("btn_id", "text")
+	ModalUserData.label$=moai.Get("btn_label", "text")
+	If (StrLen(current$)>1)
+		If (IsAlpha(LeftStr(current$, 1)))
+			ModalUserData.name$=current$
+			Local active$=moai.Get("tree_hierarchy", "Active")
+			moai.DoMethod(active$, "SetItem", 0, "button "..current$)
+		Else
+			moai.Request("ID", "ID contained illegal characters", "OK", "Warning")
+		EndIf
+	EndIf
 EndFunction
 
 /*
@@ -108,7 +123,7 @@ EndFunction
 **	Do nothing because requester modifies no fields
 */
 Function button.editorDone()
-	moai.DoMethod("win_req", "EndModal", 0)
+	moai.DoMethod("btn_req", "EndModal", 0)
 EndFunction
 
 /*

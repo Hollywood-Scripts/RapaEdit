@@ -192,6 +192,11 @@ Function group.CopyBack()
 	ModalUserData.valign=moai.Get("grp_valign", "Active")
 	moai.Set(ModalUserData.id$,
 		"Name", ModalUserData:header$()..ModalUserData.name$)
+	If (ModalUserData.Title$<>"")
+		Local Active$=moai.Get("tree_hierarchy", "Active")
+		moai.DoMethod(Active$, "SetItem", 0,
+			ModalUserData:Header$()..ModalUserData.Title$)
+	EndIf
 EndFunction
 
 /*

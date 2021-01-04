@@ -14,7 +14,7 @@ window["edit$"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
 	<vgroup>
 		<colgroup columns="2">
 			<label>ID</label>
-			<textentry id="win_id" reject="0123456789" />
+			<textentry id="win_id" />
 			<label>Title</label>
 			<textentry id="win_title" />
 			<label>Width</label>
