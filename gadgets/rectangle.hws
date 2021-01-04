@@ -40,7 +40,7 @@ EndFunction
 /*
 **	rectangle Destructor method
 **
-**	Removes rectangle and all contents
+**	Removes rectangle
 */
 Function rectangle.define.delete(self)
 	moai.DoMethod("tree_hierarchy", "remove", self.id$)
@@ -74,7 +74,7 @@ EndFunction
 **  Creates a graphical requester indicating that rectangles can't be edited
 */
 Function rectangle.editor(data)
-	moai.Request("Rectabgke", "Cannot edit a rectangle.", "OK", "Information")
+	moai.Request("Rectangle", "Cannot edit a rectangle.", "OK", "Information")
 EndFunction
 
 /*

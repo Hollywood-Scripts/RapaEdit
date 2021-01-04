@@ -1,0 +1,123 @@
+/*
+**  buttons.hws
+**
+**  Class that defines button constructs in RapaGUI
+**
+**  By Samuel D. Crow
+*/
+
+button={}
+button["prefix$"]="btn_"
+button["kind$"]="button"
+button["count"]=0
+button["edit"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
+<dialog id="btn_req" title="button">
+	<vgroup>
+		<label>Label</label>
+		<textentry id="btn_label" markall="true" />
+		<hgroup>
+			<button id="btn_ok" icon="12">OK</button>
+			<button id="btn_cancel" icon="13">Cancel</button>
+		</hgroup>
+	</vgroup>
+</dialog>]]
+
+button["define"]={}
+
+/*
+**  button Factory Method
+**
+**  Generates new button
+**
+**  Accepts parent class handle
+**
+**  Returns initialized table of an empty button
+*/
+Function button:new(parent)
+	local b=CopyTable(self.define)
+
+	;add parent and type links
+	b["parent"]=parent
+	b["application"]=parent.application
+	b["type"]=button
+	
+	;set id$ for tree manipulation only
+	b["id$"]="btn"..Strstr(button.count)
+	button.count=button.count+1
+	b["label$"]=b.id$
+
+	return(r)
+EndFunction
+
+/*
+**	button Destructor method
+**
+**	Removes button
+*/
+Function button.define.delete(self)
+	moai.DoMethod("tree_hierarchy", "remove", self.id$)
+	self=Nil
+EndFunction
+
+/*
+**	Add Gadget
+**
+**	Impossible to add gadget to leaf element
+*/
+Function button.addGadget(dest, type)
+	moai.Request("Error","Impossible to add gadget to button", "OK", "Error")
+EndFunction
+
+/*
+**	Be Added 
+**
+**	Add yourself to a parent gadget or window
+*/
+Function button.beAdded(data)
+	moai.DoMethod("tree_hierarchy", "InsertLeaf", data.id$,
+		data.parent.id$, "tail", "button")
+	Local uid$=moai.Get(data.id$, "UID")
+	treeitems[uid$]=data
+EndFunction
+
+/*
+**  Editor Method
+**
+**  Creates a graphical requester indicating that buttons can't be edited
+*/
+Function button.editor(data)
+	moai.CreateDialog(button.edit,"win")
+	moai.Set("btn_label", "text", data.label$)
+	Global ModalUserData=data
+	moai.DoMethod("btn_dlg", "ShowModal")
+EndFunction
+
+/*
+**	Copy Back
+**
+**	Do nothing because nothing to edit
+*/
+Function button.CopyBack()
+	ModalSetUserData.label$=maoi.Get("btn_label", "text")
+	moai.Set(ModalUserData.id$, "Name", ModalSetUserData.label$)
+EndFunction
+
+/*
+**	Editor Done Function
+**
+**	Do nothing because requester modifies no fields
+*/
+Function button.editorDone()
+	moai.DoMethod("win_req", "EndModal", 0)
+EndFunction
+
+/*
+**	Generate XML
+**
+**	Generate XML code string for this recgangle
+*/
+Function button.define.generateXML$(indention)
+	Local xml$=RepeatStr("\t",indention).."<button id=\""..self.id$.."\" >"..
+		self.label$.."</button>\n"
+	Return(xml$)
+EndFunction
