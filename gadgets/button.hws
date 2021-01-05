@@ -12,19 +12,40 @@ button["kind$"]="button"
 button["count"]=0
 button["edit"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
 <dialog id="btn_req" title="button">
-	<colgroup columns="2">
-		<label>ID</label>
-		<textentry id="btn_id" />
-		<label>Label</label>
-		<textentry id="btn_label" />
+	<vgroup>
+		<colgroup columns="2">
+			<label>ID</label>
+			<textentry id="btn_id" />
+			<label>Text</label>
+			<textentry id="btn_label" />
+		</colgroup>
+		<hgroup>
+			<label>Toggle</label>
+			<checkbox id="btn_toggle" />
+			<rectangle />
+		</hgroup>
+		<hgroup>
+			<label>Icon Position</label>
+			<choice id="btn_iconleft">
+				<item>Right</item>
+				<item>Left</item>
+			</choice>
+		</hgroup>
+		<hgroup>
+			<label>Icon</label>
+			<popfile id="btn_icon" />
+		</hgroup>
 		<hgroup>
 			<button id="btn_ok" icon="12">OK</button>
 			<button id="btn_cancel" icon="13">Cancel</button>
 		</hgroup>
-	</colgroup>
+	</vgroup>
 </dialog>]]
 
 button["define"]={}
+button.define["toggle"]=False
+button.define["iconleft"]=True
+button.define["icon$"]=""
 
 /*
 **  button Factory Method
@@ -43,7 +64,7 @@ Function button:new(parent)
 	b["application"]=parent.application
 	b["type"]=button
 	
-	;set id$ for tree manipulation only
+	;set id$
 	b["id$"]="btn"..Strstr(button.count)
 	button.count=button.count+1
 	
@@ -93,7 +114,10 @@ EndFunction
 Function button.editor(data)
 	moai.CreateDialog(button.edit,"win")
 	moai.Set("btn_label", "text", data.label$)
-	moai.DoMethod("btn_label", "MarkAll")
+	moai.Set("btn_id", "text", data.name$)
+	moai.Set("btn_toggle", "Selected", data.toggle)
+	moai.Set("btn_icon", "File", data.icon$)
+	moai.Set("btn_iconleft", "Active", IIf(data.iconleft, 1, 0))
 	Global ModalUserData=data
 	moai.DoMethod("btn_req", "ShowModal")
 EndFunction
@@ -101,18 +125,28 @@ EndFunction
 /*
 **	Copy Back
 **
-**	Do nothing because nothing to edit
+**	Processes buffer when OK pressed
 */
 Function button.CopyBack()
-	Local current$=moai.Get("btn_id", "text")
-	ModalUserData.label$=moai.Get("btn_label", "text")
-	If (StrLen(current$)>1)
+	Local current$=moai.Get("btn_id", "Text")
+	ModalUserData.toggle=moai.Get("btn_toggle", "Selected")
+	ModalUserData.label$=moai.Get("btn_label", "Text")
+	ModalUserData.icon$=moai.Get("btn_icon", "File")
+	Switch moai.Get("btn_iconleft", "Active")
+		Case 0:
+			ModalUserData.iconleft=False
+		Case 1:
+			ModalUserData.iconleft=True
+		Default:
+			;Should never happen
+			Assert(false)
+	EndSwitch
+	If (StrLen(current$)>0)
 		If (IsAlpha(LeftStr(current$, 1)))
 			ModalUserData.name$=current$
-			Local active$=moai.Get("tree_hierarchy", "Active")
-			moai.DoMethod(active$, "SetItem", 0, "button "..current$)
+			moai.DoMethod(ModalUserData.id$, "SetItem", 0, "button "..current$)
 		Else
-			moai.Request("ID", "ID contained illegal characters", "OK", "Warning")
+			moai.Request("ID", "ID must start with a letter", "OK", "Warning")
 		EndIf
 	EndIf
 EndFunction
@@ -120,7 +154,7 @@ EndFunction
 /*
 **	Editor Done Function
 **
-**	Do nothing because requester modifies no fields
+**	Called by handler method when OK or Cancel has been clicked
 */
 Function button.editorDone()
 	moai.DoMethod("btn_req", "EndModal", 0)
@@ -132,7 +166,12 @@ EndFunction
 **	Generate XML code string for this recgangle
 */
 Function button.define.generateXML$(indention)
-	Local xml$=RepeatStr("\t",indention).."<button id=\""..self.id$.."\" >"..
-		self.label$.."</button>\n"
+	Local xml$
+	xml$=RepeatStr("\t",indention).."<button id=\""..self.id$.."\" toggle=\""..
+		IIf(self.toggle,"true","false").."\" "..
+		IIf(self.icon$<>"", "icon=\""..self.icon$.."\" iconpos=\""..
+			IIf(self.iconleft, "left", "right").."\" ", "")..
+		" >\n"..RepeatStr("\t", indention+1)..self.label$..
+		RepeatStr("\t", indention).."</button>\n"
 	Return(xml$)
 EndFunction
