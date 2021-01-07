@@ -239,7 +239,7 @@ Function group.define.GenerateXML$(indention)
 			xml$=xml$.." valign=\"bottom\""
 	EndSwitch
 	xml$=xml$..">\n"
-	For y,x In IPairs(self.contents) Do ml$=xml$+x.generateXML$(indention+1)
+	For y,x In IPairs(self.contents) Do xml$=xml$..x.generateXML$(indention+1)
 	xml$=xml$..RepeatStr("\t", indention).."</"..self.header$()..">\n"
 	Return(xml$)
 EndFunction
