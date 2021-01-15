@@ -165,13 +165,15 @@ EndFunction
 **
 **	Generate XML code string for this recgangle
 */
-Function button.define.generateXML$(indention)
+Function button.define:generateXML$(indention)
 	Local xml$
-	xml$=RepeatStr("\t",indention).."<button id=\""..self.id$.."\" toggle=\""..
-		IIf(self.toggle,"true","false").."\" "..
+	xml$=RepeatStr("\t",indention)..
+		"<button id=\""..
+		self.id$.."\" "..
+		IIf(self.toggle,"toggle=\"true\" ","")..
 		IIf(self.icon$<>"", "icon=\""..self.icon$.."\" iconpos=\""..
-			IIf(self.iconleft, "left", "right").."\" ", "")..
-		" >\n"..RepeatStr("\t", indention+1)..self.label$..
+			IIf(self.iconleft, "left", "right").."\" ", "").." >\n"..
+		RepeatStr("\t", indention+1)..self.label$.."\n"..
 		RepeatStr("\t", indention).."</button>\n"
 	Return(xml$)
 EndFunction

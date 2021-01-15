@@ -171,14 +171,14 @@ EndFunction
 **
 **	Recursively generates XML output for this item and all itmes contained in it
 */
-Function window.define:generateXML$(indention)
-	Local xml$=RepeatStr("\t",indention).."<window id=\""..self.id$..
-		"\" title=\""..self.title.."\" width=\""..self.width..
+Function window.define:generateXML$()
+	Local xml$="\t<window id=\""..self.id$..
+		"\" title=\""..self.title$.."\" width=\""..self.width..
 		"\" height=\""..self.height.."\" dragbar=\""..
 		IIf(self.draggable,"True","False").."\" closegadget=\""..
 		IIf(self.closegadget,"True","False").."\" toolwindow\""..
 		IIf(self.toolwindow,"True","False").."\">\n"..
-		IIf(IsNil(self.content),"",content:generateXML(indention+1))..
-		RepeatStr("\t",indention).."</window>\n"
+		IIf(IsNil(self.contents),"",self.contents:generateXML$(2))..
+		"\t</window>\n"
 	Return(xml$)
 EndFunction

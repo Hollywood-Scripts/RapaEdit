@@ -104,7 +104,7 @@ EndFunction
 **	Removes group and all contents
 */
 Function group.define:delete()
-	Local nested=RawGet(self, contents)
+	Local nested=RawGet(self, "contents")
 	If (Not IsNil(nested))
 		For x In nested Do x:delete()
 	EndIf
@@ -119,8 +119,7 @@ EndFunction
 */
 Function group.addGadget(dest, type)
 	Local data=type:new(dest)
-	;type.editor(data)
-	If (IsNil(RawGet(dest, contents))) Then dest["contents"]={}
+	If (IsNil(RawGet(dest, "contents"))) Then dest["contents"]={}
 	dest.contents[dest.children]=data
 	data["slot"]=dest.children
 	dest.children=dest.children+1
@@ -213,15 +212,15 @@ EndFunction
 **
 **	Generates XML code for group and all gadgets in it
 */
-Function group.define.GenerateXML$(indention)
+Function group.define:generateXML$(indention)
 	Local xml$
 	xml$=RepeatStr("\t",indention).."<"..self:header$()..
 		IIf(self.title$<>""," title=\""..self.title$.."\"","")..
-		IIf(self.frame," frame=\"true\""..
-			IIf(self.frametitle<>"", " frametitle=\"..self.frametitle..\"", ""), "")..
-		IIf(self.same, "same=\"true\"", "")..
+		IIf(self.frame," frame=\"true\" "..
+			IIf(self.frametitle$<>"", "frametitle=\""..self.frametitle$.."\" ", ""), "")..
+		IIf(self.same, "same=\"true\" ", "")..
 		" color=\""..self.color.."\" id=\""..self.id$.."\""..
-		IIf(self.kind=2, " columns=\""..self.columns.."\"", "")
+		IIf(self.kind=2, " columns=\""..self.columns.."\" ", "")
 	Switch self.halign
 		Case 1:
 			xml$=xml$.." halign=\"left\""
@@ -239,8 +238,13 @@ Function group.define.GenerateXML$(indention)
 			xml$=xml$.." valign=\"bottom\""
 	EndSwitch
 	xml$=xml$..">\n"
-	For y,x In IPairs(self.contents) Do xml$=xml$..x.generateXML$(indention+1)
-	xml$=xml$..RepeatStr("\t", indention).."</"..self.header$()..">\n"
+	If (Not IsNil(RawGet(self, "contents")))
+		For Local k=0 To self.children-1
+			Local v=self.contents[k]
+			xml$=xml$..v:generateXML$(indention+1)
+		Next
+	EndIf
+	xml$=xml$..RepeatStr("\t", indention).."</"..self:header$()..">\n"
 	Return(xml$)
 EndFunction
 

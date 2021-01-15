@@ -143,8 +143,20 @@ Function p_MenuToolBar(msg, len)
 			p_AddGadget()
 		Case "new":
 			application:new()
-		Case "export":
-			application.GenerateXML$()
+		Case "preview":
+			Local xml$=application:GenerateXML$()
+			moai.CreateDialog([[<dialog id="xml_dialog" width="800" height="600" title="XML Preview">
+				<vgroup>
+					<textview id="xml_preview"></textview>
+					<hgroup>
+						<rectangle />
+						<button id="xml_export" >Export</button>
+						<button id="xml_ok" >OK</button>
+					</hgroup>
+				</vgroup>
+			</dialog>]], "win")
+			moai.Set("xml_preview", "Text", xml$)
+			moai.DoMethod("xml_dialog", "showModal")
 	EndSwitch
 EndFunction
 
@@ -169,6 +181,21 @@ Function p_handler(message, prefixLength)
 				Break
 		EndSwitch
 	EndIf
+EndFunction
+
+/*
+**	XML Preview handler
+*/
+function p_XML(msg, prefixLength)
+	Switch UnRightStr(msg.id, prefixLength)
+		Case "export":
+			Local filename$=FileRequest("XML Export", "xml", #REQ_SAVEMODE)
+			If filename$<>""
+				StringToFile(moai.Get("xml_preview", "Text"), filename$)
+			EndIf
+		Case "ok":
+			moai.DoMethod("xml_dialog", "EndModal", 0)
+	EndSwitch
 EndFunction
 
 /*
@@ -222,6 +249,7 @@ prefixes["tree_"]=p_Hierarchy
 prefixes["lv_"]=p_GadSelect
 prefixes["wa_"]=application.AddWindow
 prefixes["wr_"]=application.RemWindow
+prefixes["xml_"]=p_XML
 
 InstallEventHandler({RapaGUI=p_ProcessGUI})
 

@@ -19,7 +19,7 @@ Function application:new()
 	data["name$"]=data.id$
 	self.count=self.count+1
 	data["type"]=application
-	data["application"]=self
+	data["application"]=data
 	data["encoding"]="utf8"
 	;Note:  Children of applications have a reserved item called "slot" that
 	;	holds enumeration data for the parent application
@@ -145,11 +145,15 @@ Function application.GenerateXML$()
 		moai.Request("Unselected", "No Application is selected", "OK", "Error")
 		Return
 	EndIf
-	Local temp$, data=p_GetType(tree$)
+	Local temp$, temp2=p_GetType(tree$)
+	assert(Not IsNil(temp2))
+	Local data=temp2.application
+	assert(Not IsNil(data))
 	Local XML$="<?xml version=\"1.0\" encoding=\""..data.encoding.."\"?>\n"..
-		"<application id=\""..data.name.."\">\n"
-	For x, y In data.contents
-		XML$=XML$..y.GenerateXML$(1)
+		"<application id=\""..data.name$.."\">\n"
+	If (IsNil(data.contents)) Then Return (XML$.."</application>\n")
+	For x, y In IPairs(data.contents)
+		XML$=XML$..y:GenerateXML$()
 	Next
 	XML$=XML$.."</application>\n"
 	Return(XML$)

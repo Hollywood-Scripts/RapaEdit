@@ -98,6 +98,6 @@ EndFunction
 **
 **	Generate XML code string for this recgangle
 */
-Function rectangle.define.generateXML$(indention)
+Function rectangle.define:generateXML$(indention)
 	Return(RepeatStr("\t",indention).."<rectangle id=\""..self.id$.."\" />\n")	
 EndFunction
