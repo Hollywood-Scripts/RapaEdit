@@ -9,6 +9,7 @@
 Global application={}
 application["count"]=0
 application["kind$"]="application"
+Const #FILEVER=1
 
 /*
 **	Application factory method
@@ -25,6 +26,13 @@ Function application:new()
 	;	holds enumeration data for the parent application
 	data["children"]=0
 	data["saved"]=False
+	self.beAdded(data)
+EndFunction
+
+/*
+**	Be Added
+*/
+Function application.beAdded(data)
 	moai.DoMethod("tree_hierarchy", "InsertNode", data.id$, "root", "tail", "application "..data.name$)
 	moai.DoMethod("tree_hierarchy", "Open", data.id$)
 	moai.Set("tree_hierarchy", "Active", data.id$)
@@ -139,22 +147,110 @@ Function application.editorDone()
 	moai.DoMethod("app_req", "EndModal", 0)
 EndFunction
 
+/*
+**	Generate XML
+**
+**	Returns the XML representation of the current application or Nil if error found
+*/
 Function application.GenerateXML$()
-	Local tree$=moai.Get("tree_hierarchy", "Active")
-	If (tree$="off")
-		moai.Request("Unselected", "No Application is selected", "OK", "Error")
-		Return
-	EndIf
-	Local temp$, temp2=p_GetType(tree$)
-	assert(Not IsNil(temp2))
-	Local data=temp2.application
-	assert(Not IsNil(data))
+	Local data=application.getCurrent()
+	If IsNil(data) Then Return(Nil)
 	Local XML$="<?xml version=\"1.0\" encoding=\""..data.encoding.."\"?>\n"..
 		"<application id=\""..data.name$.."\">\n"
-	If (IsNil(data.contents)) Then Return (XML$.."</application>\n")
+	If (IsNil(RawGet(data, "contents"))) Then Return (XML$.."</application>\n")
 	For x, y In IPairs(data.contents)
 		XML$=XML$..y:GenerateXML$()
 	Next
 	XML$=XML$.."</application>\n"
 	Return(XML$)
+EndFunction
+
+/*
+**	Get Current
+**
+**	Gets the current application document or Nil if there isn't one selected
+*/
+Function application.getCurrent()
+	Local tree$=moai.Get("tree_hierarchy", "Active")
+	If (tree$="off")
+		moai.Request("Unselected", "No Application is selected", "OK", "Error")
+		Return(Nil)
+	EndIf
+	Local temp$, temp2=p_GetType(tree$)
+	assert(Not IsNil(temp2))
+	Local data=temp2.application
+	assert(Not IsNil(data))
+	Return(data)
+EndFunction
+
+/*
+**	Save As
+**
+**	Saves stripped version of the current application table to a file
+*/
+Function application.saveas(filename$)
+	Local data=application.getCurrent()
+	If IsNil(data) Or IsNil(RawGet(data, "contents"))
+		moai.Request("Empty Document", "Nothing to save", "OK", "Error")
+		Return
+	EndIf
+	data["filename$"]=filename$
+	Local savebuf=CopyTable(data, True)
+	savebuf.type=Nil
+	savebuf.saved=Nil
+	savebuf.children=Nil
+	savebuf.application=Nil
+	savebuf.id$=Nil
+	savebuf.count=Nil
+	For k, v In Pairs(data.contents)
+		Local buf=copyTable(v, True)
+		buf.type.save(buf)
+		savebuf.contents[k]=buf
+	Next
+	Local outfile=OpenFile(Nil, filename$, #MODE_WRITE)
+	; write cookie to indicate file type
+	WriteString(outfile, "RapaEdit", 8, #ENCODING_ISO8859_1)
+	; write format version
+	WriteInt(outfile, #FILEVER)
+	; write contents
+	WriteTable(outfile, savebuf)
+	CloseFile(outfile)
+	data.saved=True
+EndFunction
+
+/*
+**	Load
+**
+**	Load a saved file
+*/
+Function application.load()
+	Local filename$=FileRequest("", "rapa")
+	If filename$="" Then Return
+	Local infile=OpenFile(Nil, filename$, #MODE_READ)
+	; check file type cookie
+	If ReadString(infile, 8, #ENCODING_ISO8859_1)<>"RapaEdit"
+		moai.Request("Corrupt", "Filetype not recognized", "OK", "Error")
+		Return(Nil)
+	EndIf
+	; check version number
+	If ReadInt(infile)>#FILEVER
+		moai.Request("Version", "File version is too new\nfor this version of RapaEdit",
+			"OK", "Error")
+		Return(Nil)
+	EndIf
+	; load actual data
+	Local loadbuf=ReadTable(infile)
+	; initialize missing fields
+	loadbuf["count"]=application.count
+	loadbuf["id$"]="app"..StrStr(loadbuf.count)
+	application.count=application.count+1
+	loadbuf["type"]=application
+	loadbuf["saved"]=True
+	loadbuf["application"]=loadbuf
+	loadbuf["children"]=0
+	application.beAdded(loadbuf)
+	For k, v In IPairs(loadbuf.contents)
+		gadgetclasses[v.kind$].load(v, loadbuf)
+		loadbuf.children=loadbuf.children+1
+	Next
 EndFunction

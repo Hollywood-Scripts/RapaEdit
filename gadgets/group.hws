@@ -54,7 +54,8 @@ group["edit$"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
 </dialog>]]
 
 group["define"]={}
-group.define["kind"]=0
+group.define["kind$"]=group.kind$
+group.define["group"]=0
 group.define["subitems"]=0
 group.define["same"]=False
 group.define["frame"]=False
@@ -140,7 +141,7 @@ Function group.beAdded(data)
 EndFunction
 
 function group.define:header$()
-	Switch (self.kind)
+	Switch (self.group)
 		Case 0:
 			Return("vgroup ")
 		Case 1:
@@ -159,7 +160,7 @@ EndFunction
 */
 Function group.editor(data)
 	moai.CreateDialog(group.edit$, "win")
-	moai.Set("grp_kind", "Active", data.kind)
+	moai.Set("grp_kind", "Active", data.group)
 	moai.Set("grp_columns", "Text", data.columns)
 	moai.Set("grp_title", "Text", data.title$)
 	moai.Set("grp_frametitle", "Text", data.frametitle$)
@@ -179,7 +180,7 @@ EndFunction
 **	Copy data back from requestor when OK selected
 */
 Function group.CopyBack()
-	ModalUserData.kind=moai.Get("grp_kind", "Active")
+	ModalUserData.group=moai.Get("grp_kind", "Active")
 	ModalUserData.columns=moai.Get("grp_columns", "Text")
 	ModalUserData.title$=moai.Get("grp_title", "Text")
 	ModalUserData.frametitle$=moai.Get("grp_frametitle", "Text")
@@ -220,7 +221,7 @@ Function group.define:generateXML$(indention)
 			IIf(self.frametitle$<>"", "frametitle=\""..self.frametitle$.."\" ", ""), "")..
 		IIf(self.same, "same=\"true\" ", "")..
 		" color=\""..self.color.."\" id=\""..self.id$.."\""..
-		IIf(self.kind=2, " columns=\""..self.columns.."\" ", "")
+		IIf(self.group=2, " columns=\""..self.columns.."\" ", "")
 	Switch self.halign
 		Case 1:
 			xml$=xml$.." halign=\"left\""
@@ -248,3 +249,48 @@ Function group.define:generateXML$(indention)
 	Return(xml$)
 EndFunction
 
+/*
+**	Save
+**
+**	Strip out invariants for saving buffer
+*/
+Function group.save(self)
+	self.generateXML$=Nil
+	self.delete=Nil
+	self.parent=Nil
+	self.application=Nil
+	self.type=Nil
+	self.header$=Nil
+	self.id$=Nil
+	self.count=Nil
+	If self.children>0
+		For k=0 To self.children-1
+			Local v=CopyTable(self.contents[k], True)
+			v.slot=Nil
+			v.type.save(v)
+			self.contents[k]=v
+		Next
+	EndIf
+EndFunction
+
+/*
+**	Load
+**
+**	Add all missing invariant fields to load buffer
+*/
+Function group.load(self, myParent)
+	self["count"]=group.count
+	self["id$"]="grp"..StrStr(self.count)
+	group.count=group.count+1
+	self["generateXML$"]=group.define.generateXML$
+	self["delete"]=group.define.delete
+	self["parent"]=myParent
+	self["application"]=myParent.application
+	self["type"]=group
+	self["header$"]=group.define.header$
+	group.beAdded(self)
+	For k, v In Pairs(self.contents)
+		v["slot"]=k
+		gadgetclasses[v.kind$].load(v, self)
+	Next
+EndFunction

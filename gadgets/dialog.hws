@@ -59,6 +59,7 @@ Function dialog:new(app)
 	w["parent"]=app
 	w["application"]=app.application
 	w["type"]=dialog
+	w["kind$"]=dialog.kind$
 
 	;enumerate count from static variable
 	w["count"]=self.count
@@ -181,4 +182,44 @@ Function dialog.define:generateXML$()
 		IIf(IsNil(self.contents),"",self.contents:generateXML$(2))..
 		"\t</dialog>\n"
 	Return(xml$)
+EndFunction
+
+/*
+**	Save
+**
+**	Strip out invariants for saving buffer
+*/
+Function dialog.save(self)
+	self.generateXML$=Nil
+	self.delete=Nil
+	self.parent=Nil
+	self.application=Nil
+	self.type=Nil
+	self.id$=Nil
+	self.count=Nil
+	If (Not IsNil(RawGet(self, "contents")))
+		Local buf=CopyTable(self.contents, True)
+		buf.type.save(buf)
+		self.contents=buf
+	EndIf
+EndFunction
+
+/*
+**	Load
+**
+**	Add all missing invariant fields to load buffer
+*/
+Function dialog.load(self, myParent)
+	self["count"]=dialog.count
+	self["id$"]="dlg"..StrStr(self.count)
+	dialog.count=dialog.count+1
+	self["generateXML$"]=dialog.define.generateXML$
+	self["delete"]=dialog.define.delete
+	self["parent"]=myParent
+	self["application"]=myParent
+	self["type"]=dialog
+	dialog.beAdded(self)
+	If HaveItem(self, "contents")
+		gadgetclasses[self.contents.kind$].load(self.contents, self)
+	EndIf
 EndFunction

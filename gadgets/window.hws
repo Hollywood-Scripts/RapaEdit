@@ -59,6 +59,7 @@ Function window:new(app)
 	w["parent"]=app
 	w["application"]=app.application
 	w["type"]=window
+	w["kind$"]=window.kind$
 
 	;enumerate count from static variable
 	w["count"]=self.count
@@ -95,7 +96,6 @@ EndFunction
 Function window.addGadget(dest, type)
 	If (IsNil(RawGet(dest, "contents")))
 		Local data=type:new(dest)
-		;type.editor(data)
 		dest["contents"]=data
 		type.beAdded(data)
 	Else
@@ -181,4 +181,44 @@ Function window.define:generateXML$()
 		IIf(IsNil(self.contents),"",self.contents:generateXML$(2))..
 		"\t</window>\n"
 	Return(xml$)
+EndFunction
+
+/*
+**	Save
+**
+**	Strip out invariants for saving buffer
+*/
+Function window.save(self)
+	self.generateXML$=Nil
+	self.delete=Nil
+	self.parent=Nil
+	self.application=Nil
+	self.type=Nil
+	self.id$=Nil
+	self.count=Nil
+	If (Not IsNil(RawGet(self, "contents")))
+		Local buf=CopyTable(self.contents, True)
+		buf.type.save(buf)
+		self.contents=buf
+	EndIf
+EndFunction
+
+/*
+**	Load
+**
+**	Add all missing invariant fields to load buffer
+*/
+Function window.load(self, myParent)
+	self["count"]=window.count
+	self["id$"]="win"..StrStr(self.count)
+	window.count=window.count+1
+	self["generateXML$"]=window.define.generateXML$
+	self["delete"]=window.define.delete
+	self["parent"]=myParent
+	self["application"]=myParent
+	self["type"]=window
+	window.beAdded(self)
+	If HaveItem(self, "contents")
+		gadgetclasses[self.contents.kind$].load(self.contents, self)
+	EndIf
 EndFunction

@@ -43,6 +43,7 @@ button["edit"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
 </dialog>]]
 
 button["define"]={}
+button.define["kind$"]=button.kind$
 button.define["toggle"]=False
 button.define["iconleft"]=True
 button.define["icon$"]=""
@@ -65,8 +66,9 @@ Function button:new(parent)
 	b["type"]=button
 	
 	;set id$
-	b["id$"]="btn"..Strstr(button.count)
-	button.count=button.count+1
+	b["count"]=self.count
+	b["id$"]="btn"..Strstr(b.count)
+	self.count=self.count+1
 	
 	;Set Label and locla ID to their default
 	b["label$"]=b.id$
@@ -176,4 +178,36 @@ Function button.define:generateXML$(indention)
 		RepeatStr("\t", indention+1)..self.label$.."\n"..
 		RepeatStr("\t", indention).."</button>\n"
 	Return(xml$)
+EndFunction
+
+/*
+**	Save
+**
+**	Strip out invariants for saving buffer
+*/
+Function button.save(self)
+	self.generateXML$=Nil
+	self.delete=Nil
+	self.parent=Nil
+	self.application=Nil
+	self.type=Nil
+	self.id$=Nil
+	self.count=Nil
+EndFunction
+
+/*
+**	Load
+**
+**	Add all missing invariant fields to load buffer
+*/
+Function button.load(self, myParent)
+	self["count"]=button.count
+	self["id$"]="btn"..StrStr(button.count)
+	button.count=button.count+1
+	self["generateXML$"]=button.define.generateXML$
+	self["delete"]=button.define.delete
+	self["parent"]=myParent
+	self["application"]=myParent.application
+	self["type"]=button
+	button.beAdded(self)
 EndFunction

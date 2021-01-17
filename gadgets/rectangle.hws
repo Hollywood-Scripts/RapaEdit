@@ -12,6 +12,7 @@ rectangle["kind$"]="rectangle"
 rectangle["count"]=0
 
 rectangle["define"]={}
+rectangle.define["kind$"]=rectangle.kind$
 
 /*
 **  rectangle Factory Method
@@ -31,8 +32,9 @@ Function rectangle:new(parent)
 	r["type"]=rectangle
 	
 	;set id$ for tree manipulation only
-	r["id$"]="rect"..Strstr(rectangle.count)
-	rectangle.count=rectangle.count+1
+	r["count"]=self.count
+	r["id$"]="rect"..Strstr(r.count)
+	self.count=self.count+1
 
 	return(r)
 EndFunction
@@ -100,4 +102,36 @@ EndFunction
 */
 Function rectangle.define:generateXML$(indention)
 	Return(RepeatStr("\t",indention).."<rectangle id=\""..self.id$.."\" />\n")	
+EndFunction
+
+/*
+**	Save
+**
+**	Strip out invariants for saving buffer
+*/
+Function rectangle.save(self)
+	self.generateXML$=Nil
+	self.delete=Nil
+	self.parent=Nil
+	self.application=Nil
+	self.type=Nil
+	self.id$=Nil
+	self.count=Nil
+EndFunction
+
+/*
+**	Load
+**
+**	Add all missing invariant fields to load buffer
+*/
+Function rectangle.load(self, myParent)
+	self["count"]=rectangle.count
+	self["id$"]="Rect"..StrStr(self.count)
+	rectangle.count=rectangle.count+1
+	self["generateXML$"]=rectangle.define.generateXML$
+	self["delete"]=rectangle.define.delete
+	self["parent"]=myParent
+	self["application"]=myParent.application
+	self["type"]=rectangle
+	rectangle.beAdded(self)
 EndFunction
