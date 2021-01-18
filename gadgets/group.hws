@@ -289,8 +289,10 @@ Function group.load(self, myParent)
 	self["type"]=group
 	self["header$"]=group.define.header$
 	group.beAdded(self)
-	For k, v In Pairs(self.contents)
-		v["slot"]=k
-		gadgetclasses[v.kind$].load(v, self)
-	Next
+	If HaveItem(self, "contents")
+		For k, v In Pairs(self.contents)
+			v["slot"]=k
+			gadgetclasses[v.kind$].load(v, self)
+		Next
+	EndIf
 EndFunction
