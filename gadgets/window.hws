@@ -24,7 +24,6 @@ window["edit$"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
 		</colgroup>
 		<checkbox id="win_size">Resizable</checkbox>
 		<checkbox id="win_drag">Draggable</checkbox>
-		<checkbox id="win_tool">Tool Box</checkbox>
 		<checkbox id="win_close">Closable</checkbox>
 		<hgroup>
 			<button id="win_ok" icon="12">OK</button>
@@ -37,7 +36,6 @@ window["define"]={}
 window.define["width"]=800
 window.define["height"]=600
 window.define["resizable"]=True
-window.define["toolwindow"]=False
 window.define["closegadget"]=True
 window.define["draggable"]=True
 ;window.define.contents must be Nil if empty
@@ -134,7 +132,6 @@ Function window.editor(data)
 	moai.Set("win_height", "Text", data.height)
 	moai.Set("win_size", "Selected", data.resizable)
 	moai.Set("win_drag", "Selected", data.draggable)
-	moai.Set("win_tool", "Selected", data.toolwindow)
 	moai.Set("win_close", "Selected", data.closegadget)
 	Global ModalUserData=data
 	moai.DoMethod("win_req", "ShowModal")
@@ -152,7 +149,6 @@ Function window.CopyBack()
 	ModalUserData.height=moai.Get("win_height", "Text")
 	ModalUserData.resizable=moai.Get("win_size", "Selected")
 	ModalUserData.draggable=moai.Get("win_drag", "Selected")
-	ModalUserData.toolwindow=moai.Get("win_tool", "Selected")
 	ModalUserData.closegadget=moai.Get("win_close", "Selected")
 	moai.Set(ModalUserData.id$, "Name", "window "..ModalUserData.name$)
 EndFunction
@@ -167,19 +163,38 @@ Function window.editorDone()
 EndFunction
 
 /*
+**	Make Body
+**
+**	Helper function for generating preview XML and export XML
+*/
+Function window.define:makeBody$()
+		Return("\" title=\""..self.title$.."\" width=\""..self.width..
+		"\" height=\""..self.height.."\" dragbar=\""..
+		IIf(self.draggable,"True","False").."\" closegadget=\""..
+		IIf(self.closegadget,"True","False").."\" >\n")
+EndFunction
+
+/*
 **	GenerateXML
 **
 **	Recursively generates XML output for this item and all itmes contained in it
 */
 Function window.define:generateXML$()
-	Local xml$="\t<window id=\""..self.id$..
-		"\" title=\""..self.title$.."\" width=\""..self.width..
-		"\" height=\""..self.height.."\" dragbar=\""..
-		IIf(self.draggable,"True","False").."\" closegadget=\""..
-		IIf(self.closegadget,"True","False").."\" toolwindow\""..
-		IIf(self.toolwindow,"True","False").."\">\n"..
-		IIf(IsNil(self.contents),"",self.contents:generateXML$(2))..
+	Local xml$="\t<window id=\""..self.id$..self:makeBody$()..
+		IIf(IsNil(RawGet(self, "contents")), "", self.contents:generateXML$(2))..
 		"\t</window>\n"
+	Return(xml$)
+EndFunction
+
+/*
+**	GenerateXML
+**
+**	Recursively generates XML output for this item and all itmes contained in it
+*/
+Function window.define:previewXML$()
+	Local xml$="<dialog id=\"pre_view"..self:makeBody$().."<vgroup>\n"..
+		IIf(IsNil(RawGet(self, "contents")), "", self.contents:previewXML$(0))..
+		"<button id=\"pre_exit\">Exit Preview</button>\n</vgroup>\n</dialog>\n"
 	Return(xml$)
 EndFunction
 
@@ -189,15 +204,13 @@ EndFunction
 **	Strip out invariants for saving buffer
 */
 Function window.save(self)
-	self.generateXML$=Nil
-	self.delete=Nil
 	self.parent=Nil
 	self.application=Nil
 	self.type=Nil
 	self.id$=Nil
 	self.count=Nil
 	If (Not IsNil(RawGet(self, "contents")))
-		Local buf=CopyTable(self.contents, True)
+		Local buf=p_CloneTable(self.contents)
 		buf.type.save(buf)
 		self.contents=buf
 	EndIf
@@ -213,12 +226,14 @@ Function window.load(self, myParent)
 	self["id$"]="win"..StrStr(self.count)
 	window.count=window.count+1
 	self["generateXML$"]=window.define.generateXML$
+	self["makeBody$"]=window.define.makeBody$
+	self["previewXML$"]=window.define.previewXML$
 	self["delete"]=window.define.delete
 	self["parent"]=myParent
 	self["application"]=myParent
 	self["type"]=window
 	window.beAdded(self)
-	If HaveItem(self, "contents")
+	If Not IsNil(RawGet(self, "contents"))
 		gadgetclasses[self.contents.kind$].load(self.contents, self)
 	EndIf
 EndFunction

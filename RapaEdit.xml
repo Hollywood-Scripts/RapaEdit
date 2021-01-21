@@ -8,7 +8,7 @@
 			<item id="mn_saveas" help="Save document to a new file">Save _As...</item>
 			<item />
 			<item id="mn_preview" help="Preview GUI">_Preview</item>
-			<item id="mn_export" help="Export to new Hollywood script">E_xport Script As...</item>
+			<item id="mn_export" help="Export to new XML file">E_xport Script As...</item>
 			<item />
 			<item id="mn_quit" help="Exit the program">_Quit</item>
 		</menu>

@@ -48,7 +48,22 @@ Function p_GadSelect(message, prefixLength)
 	Local suffix=UnrightStr(message.id, prefixLength)
 	DebugPrint(sufix)
 EndFunction
-	
+
+/*
+**	Clone Fields
+**
+**	Clone the non-method fields of a table only for save methods
+*/
+Function p_CloneFields(data)
+	Local savebuf=CopyTable(data, True)
+	; kill the invariant methods
+	For k, v In Pairs(savebuf)
+		If (#FUNCTION=GetType(v)) Then savebuf[k]=Nil
+	Next
+	savebuf["slot"]=Nil
+	Return(savebuf)
+EndFunction
+
 /*
 **	Get Type
 **
@@ -120,12 +135,46 @@ Function p_previewXML()
 			<hgroup>
 				<rectangle />
 				<button id="xml_export" >Export</button>
-				<button id="xml_ok" >OK</button>
+				<button id="xml_cancel" >Cancel</button>
 			</hgroup>
 		</vgroup>
 	</dialog>]], "win")
 	moai.Set("xml_preview", "Text", xml$)
 	moai.DoMethod("xml_dialog", "showModal")
+EndFunction
+
+/*
+**	Regular Preview
+*/
+Function p_preview()
+	Local sel$=moai.Get("tree_hierarchy", "Active")
+	If (sel$="off")
+		moai.Request("Unselected", "No item selected", "OK", "Error")
+		Return
+	EndIf
+	Local temp$, pnl=p_GetType(sel$)
+	If temp$="application"
+		moai.Request("Illegal",
+			"Applications cannot be previewed.\nSelect a window or dialog.", "OK", "Error")
+		Return
+	EndIf
+	DebugPrint(pnl.kind$.." of "..temp$)
+	While pnl.kind$<>"dialog" And pnl.kind$<>"window"
+		pnl=pnl.parent
+		DebugPrint("parent is "..pnl.kind$)
+	Wend
+	Local xml$=pnl.previewXML$(pnl)
+	DebugPrint(xml$)
+	moai.Request("pause", "Waiting for you", "OK")
+	moai.CreateDialog(xml$, "win")
+	moai.DoMethod("pre_view", "showModal")
+EndFunction
+
+/*
+**	Preview handler
+*/
+Function p_previewHandle(msg, len)
+	moai.DoMethod("pre_view", "EndModal", 0)
 EndFunction
 
 /*
@@ -149,7 +198,7 @@ EndFunction
 **	Returns true if there are unsaved applications
 */
 Function p_unsaved()
-	Local found, tbl=moai.DoMethod("tree_hierarachy", "GetEntry", "Root", "Head")
+	Local found, tbl=moai.DoMethod("tree_hierarchy", "GetEntry", "Root", "Head")
 	While found
 		Local u=tbl.UID
 		Local app=treeitems[u].type[kind$]
@@ -198,6 +247,8 @@ Function p_MenuToolBar(msg, len)
 		Case "new":
 			application:new()
 		Case "preview":
+			p_preview()
+		Case "export":
 			p_previewXML()
 		Case "open":
 			application.load()
@@ -235,14 +286,14 @@ EndFunction
 /*
 **	XML Preview handler
 */
-function p_XML(msg, prefixLength)
+Function p_XML(msg, prefixLength)
 	Switch UnRightStr(msg.id, prefixLength)
 		Case "export":
 			Local filename$=FileRequest("XML Export", "xml", #REQ_SAVEMODE)
 			If filename$<>""
 				StringToFile(moai.Get("xml_preview", "Text"), filename$)
 			EndIf
-		Case "ok":
+		Case "cancel":
 			moai.DoMethod("xml_dialog", "EndModal", 0)
 	EndSwitch
 EndFunction
@@ -299,6 +350,7 @@ prefixes["lv_"]=p_GadSelect
 prefixes["wa_"]=application.AddWindow
 prefixes["wr_"]=application.RemWindow
 prefixes["xml_"]=p_XML
+prefixes["pre_"]=p_previewHandle
 
 InstallEventHandler({RapaGUI=p_ProcessGUI})
 

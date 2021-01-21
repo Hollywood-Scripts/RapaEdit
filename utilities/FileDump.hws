@@ -1,0 +1,117 @@
+/*
+**	File Dump utility
+**
+**	Dumps RapaEdit files to the screen
+**
+**	By Samuel D. Crow
+*/
+
+@VERSION 8,0
+@REQUIRE "RapaGUI"
+
+Global idEnum=0
+Global l$=""
+Global cookie$=""
+Global ver$=""
+
+Function p_ReadFile()
+	Local f$=FileRequest("Select RapaEdit File", "rapa")
+	If f$=""
+		moai.Request("No File", "File Not Selected", "OK", "Warning")
+		Return(Nil)
+	EndIf
+	Local f=OpenFile(Nil, f$,#MODE_READ)
+	Local t={}
+	cookie$=ReadString(f, 8)
+	ver$="version "..StrStr(ReadInt(f))
+	t=ReadTable(f)
+	CloseFile(f)
+	Return(t)
+EndFunction
+
+/*
+**	Table Parse
+**
+**	Populates TreeView gadget with file contents
+*/
+Function p_TableParse(t, node$)
+	For x,y In Pairs(t)
+		idEnum=idEnum+1
+		If GetType(x)=#STRING Then l$=x Else l$=StrStr(x)
+		Switch GetType(y)
+		Case #TABLE:	
+			moai.DoMethod("tv", "InsertNode", StrStr(idEnum), node$, "Tail", l$)
+			moai.DoMethod("tv", "Open", StrStr(idEnum), True)
+			p_TableParse(y, StrStr(idEnum))
+		Case #STRING:
+			moai.DoMethod("tv", "InsertLeaf", StrStr(idEnum), node$, "Tail", l$, y)
+		Case #NUMBER:
+			moai.DoMethod("tv", "InsertLeaf", StrStr(idEnum), node$, "Tail", l$, StrStr(y))
+		Case #FUNCTION:
+			moai.DoMethod("tv", "InsertLeaf", StrStr(idEnum), node$, "Tail", l$, "ERROR!")
+		Default:
+			moai.Request("Type", l$.." is of unkown type", "OK", "Information")
+		EndSwitch
+	Next
+EndFunction
+
+/*
+** Handles all incoming events
+*/
+Function p_EventFunc(msg)
+	
+	Switch msg.action
+	Case "RapaGUI":
+		Switch msg.attribute
+		Case "Pressed":
+			Switch msg.id
+			Case "close":
+				End
+			EndSwitch
+ 		EndSwitch
+	EndSwitch
+
+EndFunction
+
+tbl=p_ReadFile()
+If IsNil(tbl) Then End
+
+moai.CreateApp([[<?xml version="1.0" encoding="iso-8859-1"?>
+<application id="app">
+					
+	<window id="win" title="FileDump" height="400">
+		<vgroup>
+			<treeview id="tv">
+				<column title="Key"/>
+				<column title="Value"/>
+				
+				<node name="Application">
+				</node>
+			</treeview>
+			
+			<hgroup>
+				<text id="cookie" />
+				<text id="version" />
+				<rectangle />
+				<button id="close">Close FileDump utility</button>
+			</hgroup>	
+		</vgroup>
+	</window>
+</application>
+]])
+
+; listen to these events!
+InstallEventHandler({RapaGUI = p_EventFunc})
+
+moai.Set("cookie", "text", cookie$)
+moai.Set("version", "text", ver$)
+
+moai.DoMethod("tv", "open", "root", True)
+
+p_TableParse(tbl, "Root")
+
+; main loop!
+Repeat
+	WaitEvent
+Forever
+

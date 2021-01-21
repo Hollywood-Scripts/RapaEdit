@@ -163,20 +163,39 @@ Function button.editorDone()
 EndFunction
 
 /*
+**	Make Body
+**
+**	Helper function for generating preview XML and export XML
+*/
+function button.define:makeBody$(indention)
+	Return(IIf(self.toggle,"toggle=\"true\" ","")..
+	IIf(self.icon$<>"", "icon=\""..self.icon$.."\" iconpos=\""..
+		IIf(self.iconleft, "left", "right").."\" ", "").." >\n"..
+	RepeatStr("\t", indention+1)..self.label$.."\n"..
+	RepeatStr("\t", indention).."</button>\n")
+EndFunction
+
+/*
 **	Generate XML
 **
-**	Generate XML code string for this recgangle
+**	Generate XML code string for this button
 */
 Function button.define:generateXML$(indention)
 	Local xml$
 	xml$=RepeatStr("\t",indention)..
 		"<button id=\""..
-		self.id$.."\" "..
-		IIf(self.toggle,"toggle=\"true\" ","")..
-		IIf(self.icon$<>"", "icon=\""..self.icon$.."\" iconpos=\""..
-			IIf(self.iconleft, "left", "right").."\" ", "").." >\n"..
-		RepeatStr("\t", indention+1)..self.label$.."\n"..
-		RepeatStr("\t", indention).."</button>\n"
+		self.id$.."\" "..self:makeBody$(indention)
+	Return(xml$)
+EndFunction
+
+/*
+**	Preview XML
+**
+**	Generate XML preview string for this button
+*/
+Function button.define:previewXML$(indention)
+	Local xml$
+	xml$="<button "..self:makeBody$(0)
 	Return(xml$)
 EndFunction
 
@@ -186,6 +205,8 @@ EndFunction
 **	Strip out invariants for saving buffer
 */
 Function button.save(self)
+	self.previewXML$=Nil
+	self.makeBody$=Nil
 	self.generateXML$=Nil
 	self.delete=Nil
 	self.parent=Nil
@@ -204,7 +225,9 @@ Function button.load(self, myParent)
 	self["count"]=button.count
 	self["id$"]="btn"..StrStr(button.count)
 	button.count=button.count+1
+	self["makeBody$"]=button.define.makeBody$
 	self["generateXML$"]=button.define.generateXML$
+	self["previewXML$"]=button.define.previewXML$
 	self["delete"]=button.define.delete
 	self["parent"]=myParent
 	self["application"]=myParent.application

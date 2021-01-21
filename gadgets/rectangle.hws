@@ -98,11 +98,16 @@ EndFunction
 /*
 **	Generate XML
 **
-**	Generate XML code string for this recgangle
+**	Generate XML code string for this rectangle
 */
 Function rectangle.define:generateXML$(indention)
-	Return(RepeatStr("\t",indention).."<rectangle id=\""..self.id$.."\" />\n")	
+	Return(RepeatStr("\t",indention).."<rectangle />\n")
 EndFunction
+
+/*
+**	Preview XML
+*/
+rectangle.define.previewXML$=rectangle.define.generateXML$
 
 /*
 **	Save
@@ -110,6 +115,7 @@ EndFunction
 **	Strip out invariants for saving buffer
 */
 Function rectangle.save(self)
+	self.previewXML$=Nil
 	self.generateXML$=Nil
 	self.delete=Nil
 	self.parent=Nil
@@ -129,6 +135,7 @@ Function rectangle.load(self, myParent)
 	self["id$"]="Rect"..StrStr(self.count)
 	rectangle.count=rectangle.count+1
 	self["generateXML$"]=rectangle.define.generateXML$
+	self["previewXML$"]=rectangle.define.generateXML$
 	self["delete"]=rectangle.define.delete
 	self["parent"]=myParent
 	self["application"]=myParent.application

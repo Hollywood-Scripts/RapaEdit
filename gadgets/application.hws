@@ -20,6 +20,7 @@ Function application:new()
 	data["name$"]=data.id$
 	self.count=self.count+1
 	data["type"]=application
+	data["kind$"]=application.kind$
 	data["application"]=data
 	data["encoding"]="utf8"
 	;Note:  Children of applications have a reserved item called "slot" that
@@ -69,6 +70,7 @@ Function application.AddWindow(msg, len)
 	child["slot"]=data.children
 	data.children=data.children+1
 	child.type.BeAdded(child)
+	child.type.addGadget(child, group)
 EndFunction
 
 /*
@@ -152,7 +154,7 @@ EndFunction
 **
 **	Returns the XML representation of the current application or Nil if error found
 */
-Function application.GenerateXML$()
+Function application.generateXML$()
 	Local data=application.getCurrent()
 	If IsNil(data) Then Return(Nil)
 	Local XML$="<?xml version=\"1.0\" encoding=\""..data.encoding.."\"?>\n"..
@@ -195,15 +197,17 @@ Function application.saveas(filename$)
 		Return
 	EndIf
 	data["filename$"]=filename$
-	Local savebuf=CopyTable(data, True)
+	Local savebuf=p_CloneFields(data)
+	savebuf.filename$=Nil
 	savebuf.type=Nil
 	savebuf.saved=Nil
 	savebuf.children=Nil
 	savebuf.application=Nil
 	savebuf.id$=Nil
 	savebuf.count=Nil
+	savebuf.kind$=Nil
 	For k, v In Pairs(data.contents)
-		Local buf=copyTable(v, True)
+		Local buf=p_CloneFields(v)
 		buf.type.save(buf)
 		savebuf.contents[k]=buf
 	Next
@@ -245,12 +249,15 @@ Function application.load()
 	loadbuf["id$"]="app"..StrStr(loadbuf.count)
 	application.count=application.count+1
 	loadbuf["type"]=application
+	loadbuf["kind$"]=application.kind$
 	loadbuf["saved"]=True
 	loadbuf["application"]=loadbuf
+	loadbuf["generateXML$"]=application.generateXML$
 	loadbuf["children"]=0
 	application.beAdded(loadbuf)
 	For k, v In IPairs(loadbuf.contents)
 		gadgetclasses[v.kind$].load(v, loadbuf)
 		loadbuf.children=loadbuf.children+1
+		v["slot"]=k
 	Next
 EndFunction

@@ -45,6 +45,7 @@ group["edit$"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
 		</colgroup>
 		<checkbox id="grp_frame">Framed</checkbox>
 		<checkbox id="grp_same">Uniform Spacing</checkbox>
+		<checkbox id="grp_custom">Custom Color</checkbox>
 		<popcolor id="grp_color" title="Color" />
 		<hgroup>
 			<button id="grp_ok" icon="12">OK</button>
@@ -59,6 +60,7 @@ group.define["group"]=0
 group.define["subitems"]=0
 group.define["same"]=False
 group.define["frame"]=False
+group.define["custom_color"]=False
 group.define["frametitle$"]=""
 group.define["color"]=0
 group.define["title$"]=""
@@ -166,6 +168,7 @@ Function group.editor(data)
 	moai.Set("grp_frametitle", "Text", data.frametitle$)
 	moai.Set("grp_frame", "Selected", data.frame)
 	moai.Set("grp_same", "Selected", data.same)
+	moai.Set("grp_custom", "Selected", data.custom_color)
 	moai.Set("grp_color", "RGB", data.color)
 	moai.Set("grp_id", "Text", data.name$)
 	moai.Set("grp_halign", "Active", data.halign)
@@ -186,6 +189,7 @@ Function group.CopyBack()
 	ModalUserData.frametitle$=moai.Get("grp_frametitle", "Text")
 	ModalUserData.frame=moai.Get("grp_frame", "Selected")
 	ModalUserData.same=moai.Get("grp_same", "Selected")
+	ModalUserData.custom_color=moai.Get("grp_custom", "Selected")
 	ModalUserData.color=moai.Get("grp_color", "RGB")
 	ModalUserData.name$=moai.Get("grp_id", "Text")
 	ModalUserData.halign=moai.Get("grp_halign", "Active")
@@ -209,18 +213,18 @@ Function group.editorDone()
 EndFunction
 
 /*
-**	Generate XML
+**	Make Body
 **
-**	Generates XML code for group and all gadgets in it
+**	Helper function for generating preview XML and export XML
 */
-Function group.define:generateXML$(indention)
-	Local xml$
-	xml$=RepeatStr("\t",indention).."<"..self:header$()..
+Function group.define:makeBody$(indention, isPreview)
+	local xml$=RepeatStr("\t",indention).."<"..self:header$()..
 		IIf(self.title$<>""," title=\""..self.title$.."\"","")..
 		IIf(self.frame," frame=\"true\" "..
 			IIf(self.frametitle$<>"", "frametitle=\""..self.frametitle$.."\" ", ""), "")..
 		IIf(self.same, "same=\"true\" ", "")..
-		" color=\""..self.color.."\" id=\""..self.id$.."\""..
+		IIf(custom_color, " color=\"#"..RightStr("000000"..self.color, 6).."\" ", "")..
+		IIf(isPreview, "", "id=\""..self.id$.."\"")..
 		IIf(self.group=2, " columns=\""..self.columns.."\" ", "")
 	Switch self.halign
 		Case 1:
@@ -242,10 +246,35 @@ Function group.define:generateXML$(indention)
 	If (Not IsNil(RawGet(self, "contents")))
 		For Local k=0 To self.children-1
 			Local v=self.contents[k]
-			xml$=xml$..v:generateXML$(indention+1)
+			xml$=xml$..IIf(isPreview, v:previewXML$(0), v:generateXML$(indention+1))
 		Next
 	EndIf
+	; Fill unused entries for column view with rectangles
+	If (self.group=2)
+		Local filler$=RepeatStr("\t", indention+1).."<rectangle />\n"
+		xml$=xml$..RepeatStr(filler$, self.children%self.columns)
+	EndIf
 	xml$=xml$..RepeatStr("\t", indention).."</"..self:header$()..">\n"
+	Return(xml$)
+EndFunction
+
+/*
+**	Generate XML
+**
+**	Generates XML code for group and all gadgets in it
+*/
+Function group.define:generateXML$(indention)
+	Local xml$=self:makeBody$(indention, False)
+	Return(xml$)
+EndFunction
+
+/*
+**	Preview XML
+**
+**	Generates XML preview for group and all gadgets in it
+*/
+Function group.define:previewXML$(indention)
+	Local xml$=self:makeBody$(0, True)
 	Return(xml$)
 EndFunction
 
@@ -255,7 +284,10 @@ EndFunction
 **	Strip out invariants for saving buffer
 */
 Function group.save(self)
+	self.previewXML$=Nil
 	self.generateXML$=Nil
+	self.makeBody$=Nil
+	self.makeClosing$=Nil
 	self.delete=Nil
 	self.parent=Nil
 	self.application=Nil
@@ -265,8 +297,7 @@ Function group.save(self)
 	self.count=Nil
 	If self.children>0
 		For k=0 To self.children-1
-			Local v=CopyTable(self.contents[k], True)
-			v.slot=Nil
+			Local v=p_CloneFields(self.contents[k])
 			v.type.save(v)
 			self.contents[k]=v
 		Next
@@ -282,6 +313,9 @@ Function group.load(self, myParent)
 	self["count"]=group.count
 	self["id$"]="grp"..StrStr(self.count)
 	group.count=group.count+1
+	self["makeBody$"]=group.define.makeBody$
+	self["makeClosing$"]=group.define.makeClosing$
+	self["previewXML$"]=group.define.previewXML$
 	self["generateXML$"]=group.define.generateXML$
 	self["delete"]=group.define.delete
 	self["parent"]=myParent
@@ -289,7 +323,7 @@ Function group.load(self, myParent)
 	self["type"]=group
 	self["header$"]=group.define.header$
 	group.beAdded(self)
-	If HaveItem(self, "contents")
+	If Not IsNil(RawGet(self, "contents"))
 		For k, v In IPairs(self.contents)
 			v["slot"]=k
 			gadgetclasses[v.kind$].load(v, self)
