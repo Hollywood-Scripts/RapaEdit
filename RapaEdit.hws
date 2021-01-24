@@ -112,6 +112,42 @@ Function p_AddGadget()
 EndFunction
 
 /*
+**	Default BeRemoved method
+*/
+Function p_Remove(self)
+	moai.DoMethod("tree_hierarchy", "Remove", TreeItems[self.ID$])
+	TreeItems[self.ID$]=Nil
+	self=Nil
+EndFunction
+
+/*
+**	Remove Gadget
+*/
+Function p_RemGadget(msg, len)
+	Local type$=moai.Get("tree_hierarchy", "Active")
+	If (type$="off")
+		moai.Request("Not Selected", "No gadget is selected to remove", "OK", "Error")
+		Return
+	EndIf
+	Local temp$, data=p_GetType(type$)
+	Switch (temp$)
+		Case "application":
+			moai.Request("Application", "Applications are closed using the close file option", "OK", "Information")
+			Return
+		Case "window":
+			application.RemWindow(temp$, data)
+		Case "dialog":
+			application.RemWindow(temp$, data)
+		Default:
+			If data.parent.kind$="group"
+				data.parent:rem_item(data)
+			Else
+				data:delete()
+			EndIf
+	EndSwitch	
+EndFunction
+
+/*
 **	Start Editor
 **
 **	Starts editor function on selected gadget
@@ -244,6 +280,8 @@ Function p_MenuToolBar(msg, len)
 			p_StartEditor()
 		Case "addgadget":
 			p_AddGadget()
+		Case "removegadget":
+			p_RemGadget(msg, len)
 		Case "new":
 			application:new()
 		Case "preview":
@@ -348,7 +386,6 @@ prefixes["tb_"]=p_MenuToolBar
 prefixes["tree_"]=p_Hierarchy
 prefixes["lv_"]=p_GadSelect
 prefixes["wa_"]=application.AddWindow
-prefixes["wr_"]=application.RemWindow
 prefixes["xml_"]=p_XML
 prefixes["pre_"]=p_previewHandle
 

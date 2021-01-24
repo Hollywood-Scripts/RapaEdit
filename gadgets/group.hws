@@ -56,6 +56,7 @@ group["edit$"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
 
 group["define"]={}
 group.define["kind$"]=group.kind$
+group.define["type"]=group
 group.define["group"]=0
 group.define["subitems"]=0
 group.define["same"]=False
@@ -83,12 +84,11 @@ group.define["children"]=0
 **  Returns initialized table of an empty group
 */
 Function group:new(parent)
-	local g=CopyTable(self.define)
+	local g=CopyTable(self.define, True)
 
 	;add parent and type links
 	g["parent"]=parent
 	g["application"]=parent.application
-	g["type"]=group
 
 	;enumerate count
 	g["count"]=self.count
@@ -111,6 +111,7 @@ Function group.define:delete()
 	If (Not IsNil(nested))
 		For x In nested Do x:delete()
 	EndIf
+	treeitems[moai.Get(self.id$, "UID")]=Nil
 	moai.DoMethod("tree_hierarchy", "remove", self.id$)
 	self=Nil
 EndFunction
@@ -130,6 +131,21 @@ Function group.addGadget(dest, type)
 EndFunction
 
 /*
+**	Remove Item
+*/
+Function group.define:rem_item(data)
+	If (self.children>0)
+		;shuffle down contents removing item
+		self.children=self.children-1
+		For Local k=data.slot+1 To self.children
+			self.contents[k].slot=k-1
+			self.contents[k-1]=self.contents[k]
+		Next
+		data:delete()
+	EndIf
+EndFunction
+
+/*
 **	Be Added 
 **
 **	Add yourself to a parent gadget or window
@@ -142,7 +158,7 @@ Function group.beAdded(data)
 	treeitems[uid$]=data
 EndFunction
 
-function group.define:header$()
+Function group.define:header$()
 	Switch (self.group)
 		Case 0:
 			Return("vgroup ")
@@ -284,11 +300,6 @@ EndFunction
 **	Strip out invariants for saving buffer
 */
 Function group.save(self)
-	self.previewXML$=Nil
-	self.generateXML$=Nil
-	self.makeBody$=Nil
-	self.makeClosing$=Nil
-	self.delete=Nil
 	self.parent=Nil
 	self.application=Nil
 	self.type=Nil
@@ -314,10 +325,10 @@ Function group.load(self, myParent)
 	self["id$"]="grp"..StrStr(self.count)
 	group.count=group.count+1
 	self["makeBody$"]=group.define.makeBody$
-	self["makeClosing$"]=group.define.makeClosing$
 	self["previewXML$"]=group.define.previewXML$
 	self["generateXML$"]=group.define.generateXML$
 	self["delete"]=group.define.delete
+	self["rem_item"]=group.define.rem_item
 	self["parent"]=myParent
 	self["application"]=myParent.application
 	self["type"]=group

@@ -41,25 +41,22 @@
 				<button id="tb_save" icon="5">Save</button>
 				<button id="tb_saveas" icon="6">Save As</button>
 				<button />
-				<button id="tb_addgadget" icon="7">Add</button>
-				<button id="tb_removegadget" icon="8">Remove</button>
-				<button id="tb_editgadget" icon="9">Edit</button>
-				<button />
 				<button id="tb_upgadget" icon="10">Move Up</button>
 				<button id="tb_downgadget" icon="11">Move Down</button>
 			</toolbar>
 			<hgroup>
 				<vgroup weight="1">
-					<button id="tree_deselect">Deselect icon</button>
-					<hline />
-					<button id="wa_window" icon="7" >Add Window</button>
-					<button id="wr_window" icon="8" >Remove Window</button>
-					<hline />
-					<button id="wa_dialog" icon="7" >Add Dialog</button>
-					<button id="wr_dialog" icon="8" >Remove Dialog</button>
 					<listview id="lv_gadgets" forcemode="listview">
 						<column sortable="1" />
 					</listview>
+					<button id="tb_addgadget" icon="7">Add</button>
+					<button id="tb_removegadget" icon="8">Remove</button>
+					<button id="tb_editgadget" icon="9">Edit</button>					
+					<hline />
+					<button id="tree_deselect">Deselect icon</button>
+					<hline />
+					<button id="wa_window" icon="7" >Add Window</button>
+					<button id="wa_dialog" icon="7" >Add Dialog</button>
 				</vgroup>
 				<treeview id="tree_hierarchy" weight="15">
 					<column />

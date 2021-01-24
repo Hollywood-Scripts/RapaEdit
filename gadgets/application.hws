@@ -78,18 +78,7 @@ EndFunction
 **
 **	Removes windows or dialog definitions
 */
-Function application.RemWindow(msg, len)
-	Local current$=moai.Get("tree_hierarchy", "Active")
-	Local kind$=UnrightStr(msg.id, len)
-	If (current$="off")
-		moai.Request("Type", "No "..kind$.." selected", "OK", "Error")
-		Return
-	EndIf
-	Local udtype$, ud=p_GetType(current$)
-	If (udtype$<>kind$)
-		moai.Request("Error", kind$.." expected but "..udtype$.." selected", "OK", "Error")
-		Return
-	EndIf
+Function application.RemWindow(kind$, ud)
 	Local r=moai.Request("Deleting "..kind$, "Deleting "..kind$.." named: "..ud.id$..
 		"\nAll gadgets contained in it will be deleted also.", "OK|Cancel", "Warning")
 	If (r>0)

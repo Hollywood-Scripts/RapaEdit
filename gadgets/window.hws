@@ -210,7 +210,7 @@ Function window.save(self)
 	self.id$=Nil
 	self.count=Nil
 	If (Not IsNil(RawGet(self, "contents")))
-		Local buf=p_CloneTable(self.contents)
+		Local buf=p_CloneFields(self.contents)
 		buf.type.save(buf)
 		self.contents=buf
 	EndIf
