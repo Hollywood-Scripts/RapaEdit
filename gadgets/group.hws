@@ -105,15 +105,17 @@ EndFunction
 **	Group Destructor method
 **
 **	Removes group and all contents
+**
+**	Returns boolean value indicating if it aborted
 */
 Function group.define:delete()
 	Local nested=RawGet(self, "contents")
 	If (Not IsNil(nested))
-		For x In nested Do x:delete()
+		For Local k=self.children-1 To 0 Step -1 Do nested[k]:delete()
 	EndIf
 	treeitems[moai.Get(self.id$, "UID")]=Nil
 	moai.DoMethod("tree_hierarchy", "remove", self.id$)
-	self=Nil
+	self=nil
 EndFunction
 
 /*
@@ -131,10 +133,11 @@ Function group.addGadget(dest, type)
 EndFunction
 
 /*
-**	Remove Item
+**	Remove Gadget
 */
-Function group.define:rem_item(data)
-	If (self.children>0)
+Function group.remGadget(kind$, data)
+	Local self=data.parent
+	If (self.children>1)
 		;shuffle down contents removing item
 		self.children=self.children-1
 		For Local k=data.slot+1 To self.children
@@ -142,7 +145,12 @@ Function group.define:rem_item(data)
 			self.contents[k-1]=self.contents[k]
 		Next
 		data:delete()
+		self.contents[self.children]=Nil
+		Return
 	EndIf
+	data:delete()
+	self.children=0
+	self.contents=Nil
 EndFunction
 
 /*
@@ -177,7 +185,7 @@ EndFunction
 **  Creates a graphical requester for RapaGUI group parameters
 */
 Function group.editor(data)
-	moai.CreateDialog(group.edit$, "win")
+	moai.CreateDialog(group.edit$, "win_")
 	moai.Set("grp_kind", "Active", data.group)
 	moai.Set("grp_columns", "Text", data.columns)
 	moai.Set("grp_title", "Text", data.title$)
@@ -328,7 +336,6 @@ Function group.load(self, myParent)
 	self["previewXML$"]=group.define.previewXML$
 	self["generateXML$"]=group.define.generateXML$
 	self["delete"]=group.define.delete
-	self["rem_item"]=group.define.rem_item
 	self["parent"]=myParent
 	self["application"]=myParent.application
 	self["type"]=group

@@ -31,6 +31,25 @@ Function application:new()
 EndFunction
 
 /*
+**	Application Close
+*/
+Function application.close()
+	Local self=application.getCurrent()
+	If Not self.saved And moai.Request("Unsaved",
+		"Document is unsaved.\nAre you sure you want to close?", "Yes|No", "Warning")>0
+		Local c=RawGet(self, "contents")
+		If Not IsNil(c)
+			For k, v In Pairs(c)
+				v:delete()
+				v=Nil
+			Next
+		EndIf
+		treeitems[moai.Get(self.id$, "UID")]=Nil
+		moai.DoMethod("tree_hierarchy", "Remove", self.id$)
+	EndIf
+EndFunction
+
+/*
 **	Be Added
 */
 Function application.beAdded(data)
@@ -52,10 +71,7 @@ Function application.AddWindow(msg, len)
 		Return
 	EndIf
 	Local temp$, data = p_GetType(current$)
-	If (temp$<>"application")
-		p_WindowWash()
-		Return
-	EndIf
+	data=data.application
 	Local child
 	Switch (UnrightStr(msg.id, len))
 		Case "window":
@@ -71,24 +87,32 @@ Function application.AddWindow(msg, len)
 	data.children=data.children+1
 	child.type.BeAdded(child)
 	child.type.addGadget(child, group)
+	data.saved=False
 EndFunction
 
 /*
-**	Remove Window 
+**	Remove Gadget
 **
 **	Removes windows or dialog definitions
 */
-Function application.RemWindow(kind$, ud)
-	Local r=moai.Request("Deleting "..kind$, "Deleting "..kind$.." named: "..ud.id$..
-		"\nAll gadgets contained in it will be deleted also.", "OK|Cancel", "Warning")
-	If (r>0)
-		;shuffle down contents removing ud
-		Local dad=ud.parent
-		dad.children=dad.children-1
-		If (ud.slot<>dad.children) Then dad.contents[ud.slot]=dad.contents[dad.children]
-		dad.contents[dad.children]=Nil
-		ud:delete()
+Function application.remGadget(kind$, data)
+	If Not IsNil(RawGet(data, "contents")) And moai.Request("Deleting "..kind$,
+		"Deleting "..kind$.." named: "..data.id$..
+		"\nAll gadgets contained in it will be deleted also.", "OK|Cancel", "Warning")=0
+		 Return
 	EndIf
+	;shuffle down contents removing data
+	Local dad=data.parent
+	If dad.children=1
+		data:delete()
+		dad.children=0
+		dad.contents=Nil
+		Return
+	EndIf
+	dad.children=dad.children-1
+	If (data.slot<>dad.children) Then dad.contents[data.slot]=dad.contents[dad.children]
+	dad.contents[dad.children]=Nil
+	data:delete()
 EndFunction
 
 /*
@@ -112,7 +136,7 @@ Function application.editor(data)
 				</hgroup>
 			</vgroup>
 		</dialog>
-	]], "win")
+	]], "win_")
 	moai.Set("app_encode", "Active", IIf(data.encoding="utf8",0,1))
 	moai.Set("app_name", "text", data.name$)
 	moai.DoMethod("app_req", "ShowModal")
@@ -125,7 +149,7 @@ EndFunction
 */
 Function application.CopyBack()
 	ModalUserData.name$=moai.Get("app_name", "text")
-	ModalUserData.encoding=IIF(moai.Get("app_encode", "Active")=1, "iso-8859-1", "utf8")
+	ModalUserData.encoding=IIf(moai.Get("app_encode", "Active")=1, "iso-8859-1", "utf8")
 	moai.Set(ModalUserData.id$, "Name", "application "..ModalUserData.name$)
 EndFunction
 

@@ -85,7 +85,6 @@ EndFunction
 Function button.define.delete(self)
 	treeitems[moai.Get(self.id$, "UID")]=Nil
 	moai.DoMethod("tree_hierarchy", "remove", self.id$)
-	self=Nil
 EndFunction
 
 /*
@@ -95,6 +94,15 @@ EndFunction
 */
 Function button.addGadget(dest, type)
 	moai.Request("Error","Impossible to add gadget to button", "OK", "Error")
+EndFunction
+
+/*
+**	Remove Gadget
+**
+**	Impossible to remove gadget from button
+*/
+Function button.remGadget(kind$, data)
+	moai.Request("Error","Impossible to remove gadget from button", "OK", "Error")
 EndFunction
 
 /*
@@ -115,7 +123,7 @@ EndFunction
 **  Creates a graphical requester indicating that buttons can't be edited
 */
 Function button.editor(data)
-	moai.CreateDialog(button.edit,"win")
+	moai.CreateDialog(button.edit,"win_")
 	moai.Set("btn_label", "text", data.label$)
 	moai.Set("btn_id", "text", data.name$)
 	moai.Set("btn_toggle", "Selected", data.toggle)
@@ -226,6 +234,8 @@ Function button.load(self, myParent)
 	self["generateXML$"]=button.define.generateXML$
 	self["previewXML$"]=button.define.previewXML$
 	self["delete"]=button.define.delete
+	self["addGadget"]=button.define.addGadget
+	self["remGadget"]=button.define.remGadget
 	self["parent"]=myParent
 	self["application"]=myParent.application
 	self["type"]=button

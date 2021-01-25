@@ -30,7 +30,7 @@
 			<item id="mn_rapa" help="Information about RapaGUI plugin">About RapaGUI</item>
 		</menu>
 	</menubar>
-	<window id="win" title="RapaEdit" menubar="menu">
+	<window id="win_" title="RapaEdit" menubar="menu" notify="CloseRequest">
 		<vgroup>
 			<toolbar>
 				<button id="tb_new" icon="2">New</button>
@@ -46,7 +46,7 @@
 			</toolbar>
 			<hgroup>
 				<vgroup weight="1">
-					<listview id="lv_gadgets" forcemode="listview">
+					<listview id="lv_gadgets" forcemode="listview" notify="DoubleClick">
 						<column sortable="1" />
 					</listview>
 					<button id="tb_addgadget" icon="7">Add</button>

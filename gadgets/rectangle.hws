@@ -46,7 +46,8 @@ EndFunction
 Function rectangle.define.delete(self)
 	treeitems[moai.Get(self.id$, "UID")]=Nil
 	moai.DoMethod("tree_hierarchy", "remove", self.id$)
-	self=Nil
+	self=nil
+	Return(False)
 EndFunction
 
 /*
@@ -56,6 +57,15 @@ EndFunction
 */
 Function rectangle.addGadget(dest, type)
 	moai.Request("Error","Impossible to add gadget to rectangle", "OK", "Error")
+EndFunction
+
+/*
+**	Remove Gadget
+**
+**	Impossible to remove gadget from rectangle
+*/
+Function rectangle.remGadget(kind$, data)
+	moai.Request("Error","Impossible to remove gadget from rectangle", "OK", "Error")
 EndFunction
 
 /*

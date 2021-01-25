@@ -87,19 +87,30 @@ EndFunction
 /*
 **	Add Gadget
 **
-**	Adds a single gadget to the contents 
-**
-**	Note: To contain multiple gadgets a group must be added around it.
+**	Adds a single group to the contents 
 */
 Function window.addGadget(dest, type)
-	If (IsNil(RawGet(dest, "contents")))
+	If (IsNil(RawGet(dest, "contents"))) And type.kind$="group"
 		Local data=type:new(dest)
 		dest["contents"]=data
 		type.beAdded(data)
-	Else
-		moai.Request("Need Group",
-			"Window contents is already occupied.\nCOnsider grouping the contents first.",
-			"OK", "Error")
+		Return
+	EndIf
+	moai.Request("Need Group",
+		"Window can only hold one group.", "OK", "Error")
+EndFunction
+
+/*
+**	Remove Gadget
+**
+**	Removes group from contents
+*/
+Function window.remGadget(kind$, data)
+	If Not IsNil(RawGet(data.parent, "contents")) And moai.Request("Deleting group", 
+		"Do you really want to delete the group?\nAll contents will be deleted also.",
+		"Yes|No", "Warning")>0
+		data.parent.contents:delete()
+		data.parent.contents=Nil
 	EndIf
 EndFunction
 
@@ -125,7 +136,7 @@ EndFunction
 */
 Function window.editor(data)
 	;pass the data pointer to the static handler routine
-	moai.CreateDialog(window.edit$, "win")
+	moai.CreateDialog(window.edit$, "win_")
 	moai.Set("win_id", "Text", data.name$)
 	moai.Set("win_title", "Text", data.title$)
 	moai.Set("win_width", "Text", data.width)

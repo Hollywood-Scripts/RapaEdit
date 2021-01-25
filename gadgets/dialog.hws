@@ -105,6 +105,19 @@ Function dialog.addGadget(dest, type)
 EndFunction
 
 /*
+**	Remove Gadget
+**
+**	Removes group from contents
+*/
+Function dialog.remGadget(kind$, data)
+	If Not IsNil(RawGet(data, "contents")) And moai.Request("Deleting group", 
+		"Do you really want to delete the group?\nAll contents will be deleted also.",
+		"Yes|No", "Warning")>0
+		data.contents:delete()
+	EndIf
+EndFunction
+
+/*
 **	Be Added
 */
 Function dialog.beAdded(data)
@@ -126,7 +139,7 @@ EndFunction
 */
 Function dialog.editor(data)
 	;pass the data pointer to the static handler routine
-	moai.CreateDialog(dialog.edit$, "win")
+	moai.CreateDialog(dialog.edit$, "win_")
 	moai.Set("dlg_id", "Text", data.name$)
 	moai.Set("dlg_title", "Text", data.title$)
 	moai.Set("dlg_width", "Text", data.width)

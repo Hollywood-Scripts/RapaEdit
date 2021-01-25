@@ -40,13 +40,23 @@ Global treeitems={}
 
 Function p_Hierarchy(message, prefixLength)
 	Local suffix=UnrightStr(message.id, prefixLength)
-	DebugPrint(sufix)
-	If (suffix="deselect") Then moai.Set("tree_hierarchy", "active", "off")
+	DebugPrint(suffix)
+	Switch suffix
+		Case "deselect":
+			moai.Set("tree_hierarchy", "active", "off")
+	EndSwitch
 EndFunction
 
+/*
+**	Gadget Selector
+*/
 Function p_GadSelect(message, prefixLength)
 	Local suffix=UnrightStr(message.id, prefixLength)
-	DebugPrint(sufix)
+	DebugPrint(suffix)
+	Switch message.attribute
+		Case "DoubleClick":
+			p_addGadget()
+	EndSwitch
 EndFunction
 
 /*
@@ -108,6 +118,7 @@ Function p_AddGadget()
 			Local dest=parentData.type
 			Assert(Not IsNil(dest))
 			dest.AddGadget(parentData, class)
+			parentData.application.saved=False
 	EndSwitch
 EndFunction
 
@@ -132,18 +143,11 @@ Function p_RemGadget(msg, len)
 	Local temp$, data=p_GetType(type$)
 	Switch (temp$)
 		Case "application":
-			moai.Request("Application", "Applications are closed using the close file option", "OK", "Information")
-			Return
-		Case "window":
-			application.RemWindow(temp$, data)
-		Case "dialog":
-			application.RemWindow(temp$, data)
+			moai.Request("Application",
+				"Applications are closed using the close file option",
+				"OK", "Information")
 		Default:
-			If data.parent.kind$="group"
-				data.parent:rem_item(data)
-			Else
-				data:delete()
-			EndIf
+			data.parent.type.remGadget(temp$, data)
 	EndSwitch	
 EndFunction
 
@@ -174,7 +178,7 @@ Function p_previewXML()
 				<button id="xml_cancel" >Cancel</button>
 			</hgroup>
 		</vgroup>
-	</dialog>]], "win")
+	</dialog>]], "win_")
 	moai.Set("xml_preview", "Text", xml$)
 	moai.DoMethod("xml_dialog", "showModal")
 EndFunction
@@ -201,8 +205,7 @@ Function p_preview()
 	Wend
 	Local xml$=pnl.previewXML$(pnl)
 	DebugPrint(xml$)
-	moai.Request("pause", "Waiting for you", "OK")
-	moai.CreateDialog(xml$, "win")
+	moai.CreateDialog(xml$, "win_")
 	moai.DoMethod("pre_view", "showModal")
 EndFunction
 
@@ -236,14 +239,40 @@ EndFunction
 Function p_unsaved()
 	Local found, tbl=moai.DoMethod("tree_hierarchy", "GetEntry", "Root", "Head")
 	While found
-		Local u=tbl.UID
-		Local app=treeitems[u].type[kind$]
+		Local u$=tbl.UID
+		Local app=treeitems[u$]
 		If app.saved=False Then Return(True)
-		found, tbl=moai.DoMethod("tree_hierarachy", "GetEntry", u, "Next")
+		found, tbl=moai.DoMethod("tree_hierarchy", "GetEntry", u$, "Next")
 	Wend
 	Return(False)
 EndFunction
 
+/*
+**	Save Gate
+**
+**	Requests if data is unsaved if loss is undesirable
+*/
+Function p_saveGate(test)
+	If test And moai.Request("Unsaved",
+		"Document is unsaved!\nAre you sure you want to quit?",
+		"OK|Cancel", "Warning")=0
+		Return
+	EndIf
+	End
+EndFunction
+
+/*
+**	Window Handling
+*/
+Function p_windowNotify(msg, len)
+	Assert(GetType(msg)=#TABLE)
+	Switch (msg.attribute)
+		Case "CloseRequest":
+			p_saveGate(p_unsaved())
+	EndSwitch
+	Return
+EndFunction
+	
 /*
 ** Process Menu and Toolbar events
 */
@@ -263,12 +292,7 @@ Function p_MenuToolBar(msg, len)
 	DebugPrint(suffix$)
 	Switch suffix$
 		Case "quit":
-			If p_unsaved() And moai.Request("Unsaved",
-				"Document is unsaved!\nAre you sure you want to quit?",
-				"OK|Cancel", "Warning")=0
-				Return
-			EndIf
-			End
+			p_saveGate(p_unsaved())
 		Case "encapsulate":
 			;TODO Replace this with actual Template functionality
 			moai.Request("Template", "Encapsulate selected", "OK", "Information")
@@ -290,6 +314,8 @@ Function p_MenuToolBar(msg, len)
 			p_previewXML()
 		Case "open":
 			application.load()
+		Case "close":
+			application.close()
 		Case "saveas":
 			p_saveas()
 		Case "save":
@@ -308,17 +334,19 @@ Function p_handler(message, prefixLength)
 	Assert(Not IsNil(ModalUserData))
 	Assert(GetType(ModalUserData)=#TABLE)
 	Local type=ModalUserData.type
-	If message.attribute="Pressed"
+	Switch message.attribute
+		Case "Pressed":
 		Switch(suffix) FallThrough
 			Case "ok":
 				type.CopyBack()
+				type.application.saved=False
 			Case "cancel":
 				type.editorDone()
 				ModalUserData=Nil
 			Default:
 				Break
 		EndSwitch
-	EndIf
+	EndSwitch
 EndFunction
 
 /*
@@ -388,6 +416,7 @@ prefixes["lv_"]=p_GadSelect
 prefixes["wa_"]=application.AddWindow
 prefixes["xml_"]=p_XML
 prefixes["pre_"]=p_previewHandle
+prefixes["win_"]=p_WindowNotify
 
 InstallEventHandler({RapaGUI=p_ProcessGUI})
 
