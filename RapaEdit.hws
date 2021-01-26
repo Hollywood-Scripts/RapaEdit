@@ -272,7 +272,60 @@ Function p_windowNotify(msg, len)
 	EndSwitch
 	Return
 EndFunction
-	
+
+/*
+**	Swap Entries
+*/
+Function p_swapEntries(first, second, parent)
+	; swap entries
+	Local content=treeitems[parent.UID].contents
+	Local slot1=treeitems[first.UID].slot
+	Local slot2=treeitems[second.UID].slot
+	Local temp=content[slot2]
+	content[slot2]=content[slot1]
+	content[slot1]=temp
+	content[slot2].slot=slot1
+	content[slot1].slot=slot2
+	; move GUI items
+	moai.DoMethod("tree_hierarchy", "Remove", first.ID)
+	If first.Node
+		moai.DoMethod("tree_hierarchy", "InsertNode", first.ID, parent.ID, second.ID, Unpack(first.items))
+	Else
+		moai.DoMethod("tree_hierarchy", "InsertLeaf", first.ID, parent.ID, second.ID, Unpack(first.items))
+	EndIf
+	; refresh UID in treeitems
+	Local newUID=moai.Get(first.ID, "UID")
+	treeitems[newUID]=treeitems[first.UID]
+	treeitems[UID1]=Nil
+EndFunction
+
+/*
+**	Move Up
+*/
+Function p_moveUp()
+	Local found, tbl=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Previous")
+	If Not found Then Return
+	Local found2, tbl2=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Active")
+	If Not found2 Then Return
+	Local foundParent, tblParent=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Parent")
+	If Not foundParent Then Return
+	p_swapEntries(tbl, tbl2, tblParent)
+EndFunction
+
+/*
+**	Move Down
+*/
+Function p_moveDown()
+	Local found, tbl=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Active")
+	If Not found Then Return
+	Local found2, tbl2=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Next")
+	If Not found2 Then Return
+	Local foundParent, tblParent=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Parent")
+	If Not foundParent Then Return
+	p_swapEntries(tbl, tbl2, tblParent)
+	moai.Set("tree_hierarchy", "Active", tbl.ID)
+EndFunction
+
 /*
 ** Process Menu and Toolbar events
 */
@@ -312,6 +365,10 @@ Function p_MenuToolBar(msg, len)
 			p_preview()
 		Case "export":
 			p_previewXML()
+		Case "upgadget":
+			p_moveUp()
+		Case "downgadget":
+			p_moveDown()
 		Case "open":
 			application.load()
 		Case "close":
