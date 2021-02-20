@@ -46,7 +46,7 @@ EndFunction
 Function rectangle.define.delete(self)
 	treeitems[moai.Get(self.id$, "UID")]=Nil
 	moai.DoMethod("tree_hierarchy", "remove", self.id$)
-	self=nil
+	self=Nil
 	Return(False)
 EndFunction
 

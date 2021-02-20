@@ -120,7 +120,7 @@ EndFunction
 /*
 **  Editor Method
 **
-**  Creates a graphical requester indicating that buttons can't be edited
+**  Creates a graphical requester for this button
 */
 Function button.editor(data)
 	moai.CreateDialog(button.edit,"win_")

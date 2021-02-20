@@ -96,10 +96,11 @@ EndFunction
 **	Removes windows or dialog definitions
 */
 Function application.remGadget(kind$, data)
-	If Not IsNil(RawGet(data, "contents")) And moai.Request("Deleting "..kind$,
+	If IsNil(RawGet(data, "contents")) Then Return
+	If moai.Request("Deleting "..kind$,
 		"Deleting "..kind$.." named: "..data.id$..
 		"\nAll gadgets contained in it will be deleted also.", "OK|Cancel", "Warning")=0
-		 Return
+		Return
 	EndIf
 	;shuffle down contents removing data
 	Local dad=data.parent

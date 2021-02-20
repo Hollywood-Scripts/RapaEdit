@@ -28,6 +28,7 @@
 @INCLUDE "gadgets/group.hws"
 @INCLUDE "gadgets/button.hws"
 @INCLUDE "gadgets/rectangle.hws"
+@INCLUDE "gadgets/choice.hws"
 
 /*****Global Variables*****/
 Global prefixes={}
@@ -35,6 +36,7 @@ Global gadgetclasses={}
 gadgetclasses["group"]=group
 gadgetclasses["rectangle"]=rectangle
 gadgetclasses["button"]=button
+gadgetclasses["choice"]=choice
 Global treeitems={}
 /*****Global Functions*****/
 
@@ -278,19 +280,23 @@ EndFunction
 */
 Function p_swapEntries(first, second, parent)
 	; swap entries
-	Local content=treeitems[parent.UID].contents
-	Local slot1=treeitems[first.UID].slot
-	Local slot2=treeitems[second.UID].slot
+	assert(haveItem(first, "uid"))
+	assert(haveitem(second, "uid"))
+	Local content=treeitems[parent.uid].contents
+	Local slot1=treeitems[first.uid].slot
+	Local slot2=treeitems[second.uid].slot
 	Local temp=content[slot2]
 	content[slot2]=content[slot1]
 	content[slot1]=temp
 	content[slot2].slot=slot1
 	content[slot1].slot=slot2
 	; move GUI items
-	moai.DoMethod("tree_hierarchy", "Remove", first.ID)
 	If first.Node
-		moai.DoMethod("tree_hierarchy", "InsertNode", first.ID, parent.ID, second.ID, Unpack(first.items))
+		assert(false)
+		
+;		moai.DoMethod("tree_hierarchy", "InsertNode", first.ID, parent.ID, second.ID, Unpack(first.items))
 	Else
+		moai.DoMethod("tree_hierarchy", "Remove", first.ID)
 		moai.DoMethod("tree_hierarchy", "InsertLeaf", first.ID, parent.ID, second.ID, Unpack(first.items))
 	EndIf
 	; refresh UID in treeitems
@@ -300,15 +306,31 @@ Function p_swapEntries(first, second, parent)
 EndFunction
 
 /*
+**	An item was not found that should have been
+*/
+Function NotFound(i$)
+	moai.Request("Not Found", i$.." item cannot be found", "OK", "Error")
+EndFunction
+
+/*
 **	Move Up
 */
 Function p_moveUp()
 	Local found, tbl=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Previous")
-	If Not found Then Return
+	If Not found
+		NotFound("first")
+		Return
+	EndIf
 	Local found2, tbl2=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Active")
-	If Not found2 Then Return
+	If Not found2
+		NotFound("second")
+		Return
+	EndIf
 	Local foundParent, tblParent=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Parent")
-	If Not foundParent Then Return
+	If Not foundParent
+		NotFound("parent")
+		Return
+	EndIf
 	p_swapEntries(tbl, tbl2, tblParent)
 EndFunction
 
@@ -317,11 +339,20 @@ EndFunction
 */
 Function p_moveDown()
 	Local found, tbl=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Active")
-	If Not found Then Return
+	If Not found
+		NotFound("first")
+		Return
+	EndIf
 	Local found2, tbl2=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Next")
-	If Not found2 Then Return
+	If Not found2
+		NotFound("second")
+		Return
+	EndIf
 	Local foundParent, tblParent=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Parent")
-	If Not foundParent Then Return
+	If Not foundParent
+		NotFound("parent")
+		Return
+	EndIf
 	p_swapEntries(tbl, tbl2, tblParent)
 	moai.Set("tree_hierarchy", "Active", tbl.ID)
 EndFunction
@@ -396,7 +427,7 @@ Function p_handler(message, prefixLength)
 		Switch(suffix) FallThrough
 			Case "ok":
 				type.CopyBack()
-				type.application.saved=False
+				ModalUserData.application.saved=False
 			Case "cancel":
 				type.editorDone()
 				ModalUserData=Nil
@@ -463,7 +494,7 @@ gadgetclasses["window"]=window
 gadgetclasses["dialog"]=dialog
 
 ;add global prefixes to registry
-prefixes["win_"]=p_handler
+prefixes["wn_"]=p_handler
 prefixes["dlg_"]=p_handler
 prefixes["app_"]=p_handler
 prefixes["mn_"]=p_MenuToolBar

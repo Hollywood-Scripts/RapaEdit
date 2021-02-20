@@ -1,0 +1,248 @@
+/*
+**  Choice.hws
+**
+**  Class that defines choice constructs in RapaGUI
+**
+**  By Samuel D. Crow
+*/
+
+choice={}
+choice["count"]=0
+choice["prefix$"]="ch_"
+choice["kind$"]="choice"
+choice["edit$"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
+<dialog id="ch_req" title="choice">
+	<vgroup>
+		<listview id="ch_list">
+			<column />
+		</listview>
+		<textentry id="ch_item" />
+		<colgroup columns="2">
+			<button id="ch_add" icon="7">Add Item</button>
+			<button id="ch_remove" icon="8">Remove Item</button>
+			<button id="ch_up" icon="10">Item Up</button>
+			<button id="ch_down" icon="11">Item Down</button>
+		</colgroup>
+		<hgroup>
+			<label>ID</label>
+			<textentry id="ch_name" />
+		</hgroup>
+		<hgroup>
+			<button id="ch_ok" icon="12">OK</button>
+			<button id="ch_cancel" icon="13">Cancel</button>
+		</hgroup>
+	</vgroup>
+</dialog>]]
+
+choice["define"]={}
+choice.define["kind$"]=choice.kind$
+choice.define["type"]=choice
+choice.define["itemlist$"]={}
+choice.define["itemlen"]=0
+
+/*
+**  Choice Factory Method
+**
+**  Generates new choice
+**
+**  Accepts parent class handle
+**
+**  Returns initialized table of an empty choice
+*/
+Function choice:new(parent)
+	local c=CopyTable(self.define, True)
+
+	;add parent and type links
+	c["parent"]=parent
+	c["application"]=parent.application
+
+	;enumerate count
+	c["count"]=self.count
+	self.count=self.count+1
+
+	;set default ID
+	c["id$"]="ch"..StrStr(c.count)
+	c["name$"]=c.id$
+
+	return(c)
+EndFunction
+
+/*
+**	choice Destructor method
+**
+**	Removes choice and all contents
+**
+**	Returns boolean value indicating if it aborted
+*/
+Function choice.define:delete()
+	moai.DoMethod("tree_hierarchy", "remove", self.id$)
+	self=Nil
+EndFunction
+
+/*
+**	Add Gadget
+**
+**	Impossible to add gadget to leaf element
+*/
+Function choice.addGadget(dest, type)
+	moai.Request("Error","Impossible to add gadget to choice", "OK", "Error")
+EndFunction
+
+/*
+**	Remove Gadget
+*/
+Function choice.remGadget(kind$, data)
+	moai.Request("Error","Impossible to remove gadget from choice", "OK", "Error")
+EndFunction
+
+/*
+**	Be Added 
+**
+**	Add yourself to a parent gadget or window
+*/
+Function choice.beAdded(data)
+	moai.DoMethod("tree_hierarchy", "InsertLeaf", data.id$,
+		data.parent.id$, "tail", "choice "..data.name$)
+	Local uid$=moai.Get(data.id$, "UID")
+	treeitems[uid$]=data
+EndFunction
+
+/*
+**  Editor Method
+**
+**  Creates a graphical requester for RapaGUI choice parameters
+*/
+Function choice.editor(data)
+	moai.CreateDialog(choice.edit$, "win_")
+	moai.Set("ch_name", "Text", data.name$)
+	If data.itemlen>0
+		For Local k=0 To data.itemlen-1
+			moai.DoMethod("ch_list", "Insert", "Bottom", data.itemlist$[k])
+		Next
+	EndIf
+	Global ModalUserData=data
+	moai.DoMethod("ch_req", "ShowModal")
+EndFunction
+
+/*
+**	Copy Back
+**
+**	Copy data back from requestor when OK selected
+*/
+Function choice.CopyBack()
+	ModalUserData.name$=moai.Get("ch_name", "Text")
+	ModalUserData.itemlen=moai.Get("ch_list", "Entries")
+	If ModalUserData.itemlen>0
+		For Local k=0 To ModalUserData.itemlen-1
+			ModalUserData.itemlist$[k]=moai.DoMethod("ch_list", "GetEntry", k)
+		Next
+	EndIf
+	moai.DoMethod(ModalUserData.id$,
+		"SetItem", "0", "choice "..ModalUserData.name$)
+EndFunction
+
+/*
+**	Editor Done Function
+**
+**	Closes the Requester and cleans up
+*/
+Function choice.editorDone()
+	moai.DoMethod("ch_req", "EndModal", 0)
+EndFunction
+
+/*
+**	Generate XML
+**
+**	Generates XML code for choice and all gadgets in it
+*/
+Function choice.define:generateXML$(indention)
+	If self.itemlen=0
+		Return(RepeatStr("\t", indention)..
+			"<choice id=\""..self.name$.."\" />")
+	EndIf
+	Local xml$=RepeatStr("\t",indention).."<choice id=\""..self.name$.."\">\n"
+	For Local k=0 To self.itemlen-1
+		xml$=xml$..RepeatStr("\t", indentation+1).."<item>"..
+			self.itemlist$[k].."</item>\n"
+	Next
+	xml$=xml$..RepeatStr("\t", indention).."</choice>\n"
+	Return(xml$)
+EndFunction
+
+/*
+**	Preview XML
+**
+**	Generates XML preview for choice and all gadgets in it
+*/
+Function choice.define:previewXML$(indention)
+	Return(self:generateXML$(0))
+EndFunction
+
+/*
+**	Event Handler
+**
+**	Custom event handler for choice requester
+*/
+Function choice.handler(msg, len)
+	Local suffix$=UnRightstr(msg.id, len)
+	Switch suffix$
+		Case "add":
+			Local item$=moai.Get("ch_item", "Text")
+			moai.DoMethod("ch_list", "Insert", "Bottom", item$)
+		Case "remove":
+			moai.DoMethod("ch_list", "Remove", "Active")
+		Case "up":
+			Local pos=moai.Get("ch_list", "Active")
+			If pos>0
+				moai.DoMethod("ch_list", "Move", pos-1, pos)
+				moai.Set("ch_list", "Active", pos-1)
+			EndIf
+		Case "down":
+			Local pos=moai.Get("ch_list", "Active")
+			If pos<>-1 And pos<moai.Get("ch_list", "Entries")-1
+				moai.DoMethod("ch_list", "Move", pos+1, pos)
+				moai.Set("ch_list", "Active", pos+1)
+			EndIf
+		Case "ok"
+			choice.copyback()
+			ModalUserData.application.saved=False
+			choice.editorDone()
+			ModalUserData=nil
+		Case "cancel":
+			choice.editorDone()
+			ModalUserData=nil
+		Default:
+			DebugPrint("id="..msg.id.." is unhandled")
+	EndSwitch	
+EndFunction
+
+/*
+**	Save
+**
+**	Strip out invariants for saving buffer
+*/
+Function choice.save(self)
+	self.parent=Nil
+	self.application=Nil
+	self.type=Nil
+	self.id$=Nil
+	self.count=Nil
+EndFunction
+
+/*
+**	Load
+**
+**	Add all missing invariant fields to load buffer
+*/
+Function choice.load(self, myParent)
+	self["count"]=choice.count
+	self["id$"]="ch"..StrStr(self.count)
+	choice.count=choice.count+1
+	self["previewXML$"]=choice.define.previewXML$
+	self["generateXML$"]=choice.define.generateXML$
+	self["delete"]=choice.define.delete
+	self["parent"]=myParent
+	self["application"]=myParent.application
+	self["type"]=choice
+	choice.beAdded(self)
+EndFunction

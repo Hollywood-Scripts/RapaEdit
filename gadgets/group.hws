@@ -115,7 +115,7 @@ Function group.define:delete()
 	EndIf
 	treeitems[moai.Get(self.id$, "UID")]=Nil
 	moai.DoMethod("tree_hierarchy", "remove", self.id$)
-	self=nil
+	self=Nil
 EndFunction
 
 /*
@@ -242,7 +242,8 @@ EndFunction
 **	Helper function for generating preview XML and export XML
 */
 Function group.define:makeBody$(indention, isPreview)
-	local xml$=RepeatStr("\t",indention).."<"..self:header$()..
+	If self.children=0 Then Return("")
+	Local xml$=RepeatStr("\t",indention).."<"..self:header$()..
 		IIf(self.title$<>""," title=\""..self.title$.."\"","")..
 		IIf(self.frame," frame=\"true\" "..
 			IIf(self.frametitle$<>"", "frametitle=\""..self.frametitle$.."\" ", ""), "")..
