@@ -92,7 +92,7 @@ EndFunction
 **
 **	Impossible to add gadget to leaf element
 */
-Function button.addGadget(dest, type)
+Function button.define.addGadget(dest, type)
 	moai.Request("Error","Impossible to add gadget to button", "OK", "Error")
 EndFunction
 
@@ -101,7 +101,7 @@ EndFunction
 **
 **	Impossible to remove gadget from button
 */
-Function button.remGadget(kind$, data)
+Function button.define.remGadget(kind$, data)
 	moai.Request("Error","Impossible to remove gadget from button", "OK", "Error")
 EndFunction
 
@@ -176,7 +176,7 @@ EndFunction
 **
 **	Helper function for generating preview XML and export XML
 */
-function button.define:makeBody$(indention)
+function button.makeBody$(self, indention)
 	Return(IIf(self.toggle,"toggle=\"true\" ","")..
 	IIf(self.icon$<>"", "icon=\""..self.icon$.."\" iconpos=\""..
 		IIf(self.iconleft, "left", "right").."\" ", "").." >\n"..
@@ -193,7 +193,7 @@ Function button.define:generateXML$(indention)
 	Local xml$
 	xml$=RepeatStr("\t",indention)..
 		"<button id=\""..
-		self.id$.."\" "..self:makeBody$(indention)
+		self.id$.."\" "..button.makeBody$(self, indention)
 	Return(xml$)
 EndFunction
 
@@ -204,7 +204,7 @@ EndFunction
 */
 Function button.define:previewXML$(indention)
 	Local xml$
-	xml$="<button "..self:makeBody$(0)
+	xml$="<button "..button.makeBody$(self, 0)
 	Return(xml$)
 EndFunction
 
@@ -213,7 +213,7 @@ EndFunction
 **
 **	Strip out invariants for saving buffer
 */
-Function button.save(self)
+Function button.save(self, src)
 	self.parent=Nil
 	self.application=Nil
 	self.type=Nil
@@ -230,7 +230,6 @@ Function button.load(self, myParent)
 	self["count"]=button.count
 	self["id$"]="btn"..StrStr(button.count)
 	button.count=button.count+1
-	self["makeBody$"]=button.define.makeBody$
 	self["generateXML$"]=button.define.generateXML$
 	self["previewXML$"]=button.define.previewXML$
 	self["delete"]=button.define.delete

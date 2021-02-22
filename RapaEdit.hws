@@ -29,6 +29,7 @@
 @INCLUDE "gadgets/button.hws"
 @INCLUDE "gadgets/rectangle.hws"
 @INCLUDE "gadgets/choice.hws"
+@INCLUDE "gadgets/radio.hws"
 
 /*****Global Variables*****/
 Global prefixes={}
@@ -37,7 +38,9 @@ gadgetclasses["group"]=group
 gadgetclasses["rectangle"]=rectangle
 gadgetclasses["button"]=button
 gadgetclasses["choice"]=choice
+gadgetclasses["radio"]=radio
 Global treeitems={}
+
 /*****Global Functions*****/
 
 Function p_Hierarchy(message, prefixLength)
@@ -205,7 +208,7 @@ Function p_preview()
 		pnl=pnl.parent
 		DebugPrint("parent is "..pnl.kind$)
 	Wend
-	Local xml$=pnl.previewXML$(pnl)
+	Local xml$=pnl:previewXML$()
 	DebugPrint(xml$)
 	moai.CreateDialog(xml$, "win_")
 	moai.DoMethod("pre_view", "showModal")

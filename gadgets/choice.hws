@@ -151,16 +151,12 @@ Function choice.editorDone()
 EndFunction
 
 /*
-**	Generate XML
+**	Make Body
 **
-**	Generates XML code for choice and all gadgets in it
+**	Helper for GenerateXML$ and PreviewXML$
 */
-Function choice.define:generateXML$(indention)
-	If self.itemlen=0
-		Return(RepeatStr("\t", indention)..
-			"<choice id=\""..self.name$.."\" />")
-	EndIf
-	Local xml$=RepeatStr("\t",indention).."<choice id=\""..self.name$.."\">\n"
+Function choice.makeBody$(self, indention)
+	Local xml$=""
 	For Local k=0 To self.itemlen-1
 		xml$=xml$..RepeatStr("\t", indentation+1).."<item>"..
 			self.itemlist$[k].."</item>\n"
@@ -170,12 +166,32 @@ Function choice.define:generateXML$(indention)
 EndFunction
 
 /*
+**	Generate XML
+**
+**	Generates XML code for choice gadget
+*/
+Function choice.define:generateXML$(indention)
+	If self.itemlen=0
+		Return(RepeatStr("\t", indention)..
+			"<choice id=\""..self.name$.."\" />\n")
+	EndIf
+	Local xml$=RepeatStr("\t",indention).."<choice id=\""..self.name$.."\">\n"..
+		choice.makeBody$(self, indention)
+	Return(xml$)
+EndFunction
+
+
+/*
 **	Preview XML
 **
-**	Generates XML preview for choice and all gadgets in it
+**	Generates XML preview for choice gadget
 */
 Function choice.define:previewXML$(indention)
-	Return(self:generateXML$(0))
+	If self.itemlen=0
+		Return("<choice />\n")
+	EndIf
+	Local xml$="<choice>\n"..choice.makeBody$(self, 0)
+	Return(xml$)
 EndFunction
 
 /*
@@ -221,12 +237,13 @@ EndFunction
 **
 **	Strip out invariants for saving buffer
 */
-Function choice.save(self)
+Function choice.save(self, src)
 	self.parent=Nil
 	self.application=Nil
 	self.type=Nil
 	self.id$=Nil
-	self.count=Nil
+	self.count=nil
+	self.itemlist$=CopyTable(src.itemlist$, True)
 EndFunction
 
 /*

@@ -216,7 +216,7 @@ EndFunction
 **
 **	Strip out invariants for saving buffer
 */
-Function dialog.save(self)
+Function dialog.save(self, src)
 	self.parent=Nil
 	self.application=Nil
 	self.type=Nil

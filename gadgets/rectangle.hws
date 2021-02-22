@@ -117,14 +117,14 @@ EndFunction
 /*
 **	Preview XML
 */
-rectangle.define.previewXML$=rectangle.define.generateXML$
+rectangle.define["previewxml$"]=rectangle.define.generateXML$
 
 /*
 **	Save
 **
 **	Strip out invariants for saving buffer
 */
-Function rectangle.save(self)
+Function rectangle.save(self, src)
 	self.parent=Nil
 	self.application=Nil
 	self.type=Nil

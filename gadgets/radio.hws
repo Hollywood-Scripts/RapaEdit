@@ -1,0 +1,266 @@
+/*
+**  Radio.hws
+**
+**  Class that defines radio constructs in RapaGUI
+**
+**  By Samuel D. Crow
+*/
+
+radio={}
+radio["count"]=0
+radio["prefix$"]="rad_"
+radio["kind$"]="radio"
+radio["edit$"]=[[<?xml version="1.0" encoding="iso-8859-1"?>
+<dialog id="rad_req" title="radio">
+	<vgroup>
+		<listview id="rad_list">
+			<column />
+		</listview>
+		<textentry id="rad_item" />
+		<colgroup columns="2">
+			<button id="rad_add" icon="7">Add Item</button>
+			<button id="rad_remove" icon="8">Remove Item</button>
+			<button id="rad_up" icon="10">Item Up</button>
+			<button id="rad_down" icon="11">Item Down</button>
+		</colgroup>
+		<colgroup columns="2">
+			<label>ID</label>
+			<textentry id="rad_name" />
+			<label>Frame Title</label>
+			<textentry id="rad_title" />
+		</colgroup>
+		<hgroup>
+			<button id="rad_ok" icon="12">OK</button>
+			<button id="rad_cancel" icon="13">Cancel</button>
+		</hgroup>
+	</vgroup>
+</dialog>]]
+
+radio["define"]={}
+radio.define["kind$"]=radio.kind$
+radio.define["type"]=radio
+radio.define["itemlist$"]={}
+radio.define["itemlen"]=0
+radio.define["title$"]=""
+
+/*
+**  Radio Factory Method
+**
+**  Generates new radio
+**
+**  Accepts parent class handle
+**
+**  Returns initialized table of an empty radio
+*/
+Function radio:new(parent)
+	local r=CopyTable(self.define, True)
+
+	;add parent and type links
+	r["parent"]=parent
+	r["application"]=parent.application
+
+	;enumerate count
+	r["count"]=self.count
+	self.count=self.count+1
+
+	;set default ID
+	r["id$"]="rad"..StrStr(r.count)
+	r["name$"]=r.id$
+
+	return(r)
+EndFunction
+
+/*
+**	radio Destructor method
+**
+**	Removes radio and all contents
+**
+**	Returns boolean value indicating if it aborted
+*/
+Function radio.define:delete()
+	moai.DoMethod("tree_hierarchy", "remove", self.id$)
+	self=Nil
+EndFunction
+
+/*
+**	Add Gadget
+**
+**	Impossible to add gadget to leaf element
+*/
+Function radio.addGadget(dest, type)
+	moai.Request("Error","Impossible to add gadget to radio", "OK", "Error")
+EndFunction
+
+/*
+**	Remove Gadget
+*/
+Function radio.remGadget(kind$, data)
+	moai.Request("Error","Impossible to remove gadget from radio", "OK", "Error")
+EndFunction
+
+/*
+**	Be Added 
+**
+**	Add yourself to a parent gadget or window
+*/
+Function radio.beAdded(data)
+	moai.DoMethod("tree_hierarchy", "InsertLeaf", data.id$,
+		data.parent.id$, "tail", "radio "..data.name$)
+	Local uid$=moai.Get(data.id$, "UID")
+	treeitems[uid$]=data
+EndFunction
+
+/*
+**  Editor Method
+**
+**  Creates a graphical requester for RapaGUI radio parameters
+*/
+Function radio.editor(data)
+	moai.CreateDialog(radio.edit$, "win_")
+	moai.Set("rad_name", "Text", data.name$)
+	If data.itemlen>0
+		For Local k=0 To data.itemlen-1
+			moai.DoMethod("rad_list", "Insert", "Bottom", data.itemlist$[k])
+		Next
+	EndIf
+	Global ModalUserData=data
+	moai.DoMethod("rad_req", "ShowModal")
+EndFunction
+
+/*
+**	Copy Back
+**
+**	Copy data back from requestor when OK selected
+*/
+Function radio.CopyBack()
+	ModalUserData.name$=moai.Get("rad_name", "Text")
+	ModalUserData.title$=moai.Get("rad_title", "Text")
+	ModalUserData.itemlen=moai.Get("rad_list", "Entries")
+	If ModalUserData.itemlen>0
+		For Local k=0 To ModalUserData.itemlen-1
+			ModalUserData.itemlist$[k]=moai.DoMethod("rad_list", "GetEntry", k)
+		Next
+	EndIf
+	moai.DoMethod(ModalUserData.id$,
+		"SetItem", "0", "radio "..ModalUserData.name$)
+EndFunction
+
+/*
+**	Editor Done Function
+**
+**	Closes the Requester and cleans up
+*/
+Function radio.editorDone()
+	moai.DoMethod("rad_req", "EndModal", 0)
+EndFunction
+
+/*
+**	Make Body
+**
+**	Worker function for generateXML$ and previewXML$
+*/
+Function radio.makeBody$(self, indention, isPreview)
+	If self.itemlen=0
+		moai.Request("Empty Radio", "Empty radio gadget ignored",
+			"OK", "Warning")
+		Return("")
+	EndIf
+	Local xml$=RepeatStr("\t", indention).."<radio"..
+		IIf(isPreview,"", " id=\""..self.name$.."\"")..
+			IIf(self.title$<>""," title=\""..self.title$.."\"","").." />\n"
+	For Local k=0 To self.itemlen-1
+		xml$=xml$..RepeatStr("\t", indentation+1).."<item>"..
+			self.itemlist$[k].."</item>\n"
+	Next
+	xml$=xml$..RepeatStr("\t", indention).."</radio>\n"
+	Return(xml$)
+EndFunction
+
+
+/*
+**	Generate XML
+**
+**	Generates XML code for radio gadget
+*/
+Function radio.define:generateXML$(indention)
+	Return(radio.makeBody$(self, indention, False))
+EndFunction
+
+/*
+**	Preview XML
+**
+**	Generates XML preview for radio gadget
+*/
+Function radio.define:previewXML$(indention)
+	Return(radio.makeBody$(self, 0, True))
+EndFunction
+
+/*
+**	Event Handler
+**
+**	Custom event handler for radio requester
+*/
+Function radio.handler(msg, len)
+	Local suffix$=UnRightstr(msg.id, len)
+	Switch suffix$
+		Case "add":
+			Local item$=moai.Get("rad_item", "Text")
+			moai.DoMethod("rad_list", "Insert", "Bottom", item$)
+		Case "remove":
+			moai.DoMethod("rad_list", "Remove", "Active")
+		Case "up":
+			Local pos=moai.Get("rad_list", "Active")
+			If pos>0
+				moai.DoMethod("rad_list", "Move", pos-1, pos)
+				moai.Set("rad_list", "Active", pos-1)
+			EndIf
+		Case "down":
+			Local pos=moai.Get("rad_list", "Active")
+			If pos<>-1 And pos<moai.Get("rad_list", "Entries")-1
+				moai.DoMethod("rad_list", "Move", pos+1, pos)
+				moai.Set("rad_list", "Active", pos+1)
+			EndIf
+		Case "ok"
+			radio.copyback()
+			ModalUserData.application.saved=False
+			radio.editorDone()
+			ModalUserData=nil
+		Case "cancel":
+			radio.editorDone()
+			ModalUserData=nil
+		Default:
+			DebugPrint("id="..msg.id.." is unhandled")
+	EndSwitch	
+EndFunction
+
+/*
+**	Save
+**
+**	Strip out invariants for saving buffer
+*/
+Function radio.save(self, src)
+	self.parent=Nil
+	self.application=Nil
+	self.type=Nil
+	self.id$=Nil
+	self.count=nil
+	self.itemlist$=CopyTable(src.itemlist$, True)
+EndFunction
+
+/*
+**	Load
+**
+**	Add all missing invariant fields to load buffer
+*/
+Function radio.load(self, myParent)
+	self["count"]=radio.count
+	self["id$"]="ch"..StrStr(self.count)
+	radio.count=radio.count+1
+	self["previewXML$"]=radio.define.previewXML$
+	self["generateXML$"]=radio.define.generateXML$
+	self["delete"]=radio.define.delete
+	self["parent"]=myParent
+	self["application"]=myParent.application
+	self["type"]=radio
+	radio.beAdded(self)
+EndFunction

@@ -222,7 +222,7 @@ Function application.saveas(filename$)
 	savebuf.kind$=Nil
 	For k, v In Pairs(data.contents)
 		Local buf=p_CloneFields(v)
-		buf.type.save(buf)
+		buf.type.save(buf, v)
 		savebuf.contents[k]=buf
 	Next
 	Local outfile=OpenFile(Nil, filename$, #MODE_WRITE)

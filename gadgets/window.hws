@@ -215,7 +215,7 @@ EndFunction
 **
 **	Strip out invariants for saving buffer
 */
-Function window.save(self)
+Function window.save(self, src)
 	self.parent=Nil
 	self.application=Nil
 	self.type=Nil

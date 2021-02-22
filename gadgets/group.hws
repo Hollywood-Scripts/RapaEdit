@@ -241,7 +241,7 @@ EndFunction
 **
 **	Helper function for generating preview XML and export XML
 */
-Function group.define:makeBody$(indention, isPreview)
+Function group.makeBody$(self, indention, isPreview)
 	If self.children=0 Then Return("")
 	Local xml$=RepeatStr("\t",indention).."<"..self:header$()..
 		IIf(self.title$<>""," title=\""..self.title$.."\"","")..
@@ -289,8 +289,7 @@ EndFunction
 **	Generates XML code for group and all gadgets in it
 */
 Function group.define:generateXML$(indention)
-	Local xml$=self:makeBody$(indention, False)
-	Return(xml$)
+	Return(group.makeBody$(self, indention, False))
 EndFunction
 
 /*
@@ -299,8 +298,7 @@ EndFunction
 **	Generates XML preview for group and all gadgets in it
 */
 Function group.define:previewXML$(indention)
-	Local xml$=self:makeBody$(0, True)
-	Return(xml$)
+	Return(group.makeBody$(self, 0, True))
 EndFunction
 
 /*
@@ -308,7 +306,7 @@ EndFunction
 **
 **	Strip out invariants for saving buffer
 */
-Function group.save(self)
+Function group.save(self, src)
 	self.parent=Nil
 	self.application=Nil
 	self.type=Nil
@@ -317,8 +315,9 @@ Function group.save(self)
 	self.count=Nil
 	If self.children>0
 		For k=0 To self.children-1
-			Local v=p_CloneFields(self.contents[k])
-			v.type.save(v)
+			Local buf=self.contents[k]
+			Local v=p_CloneFields(buf)
+			v.type.save(v, buf)
 			self.contents[k]=v
 		Next
 	EndIf
@@ -333,7 +332,6 @@ Function group.load(self, myParent)
 	self["count"]=group.count
 	self["id$"]="grp"..StrStr(self.count)
 	group.count=group.count+1
-	self["makeBody$"]=group.define.makeBody$
 	self["previewXML$"]=group.define.previewXML$
 	self["generateXML$"]=group.define.generateXML$
 	self["delete"]=group.define.delete
