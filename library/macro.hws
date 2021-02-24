@@ -1,0 +1,37 @@
+/*
+**	Template macro library
+**
+**	By Samuel D. Crow
+*/
+
+; NOTE:  ALL TEMPLATE DEFINITIONS MUST BE INCLUDED AFTER THIS FILE
+
+Global template={}
+Global template["macro$"]={}
+
+/*
+**	Pattern Pipeline
+**
+**	Does all pattern substitutions between an XML input and src$ table
+**
+**	The following XML comment strings are interpreted as macros by the engine:
+**	<!--localestr[number][default$]--> is a locale string substitution
+**	<!--macro[name$][enumeration]--> is a macro substitution for macro$[name$]
+**		applying then enumeration number  Keep track of the enumeration because
+**		it will be used to differentiate between multiple instances of events.
+*/
+Function template:PatternPipeline$(xml$, prefix$)
+	;define source as UTF8 compliant XML after catalog substitution first
+	Local src$=PatternReplaceStr(xml$,
+		"<!--%s*localestr%s*%[(%d+)%]%s*%[([^%]]*)]%s*-->", GetCatalogString)
+	Local out$=PatternReplaceStr(src$, 
+		"<!--%s*macro%s*%[(%w+)%]%s*%[(%d+)%]%s*-->", 
+		Function(name$, count$)
+			; fetch template
+			Local temp$=self.macro$[name$]
+			; add prefix and enumeration to all id assignments
+			Return(PatternReplaceStr(temp$, "id%s*=%s*\"(%w+)\"", 
+				"id=\""..prefix$.."_%1_"..count$.."\""))
+		EndFunction)
+	Return(out$)
+EndFunction
