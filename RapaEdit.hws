@@ -3,7 +3,7 @@
 **
 **  By Samuel D. Crow
 */
-@VERSION 8,0
+@VERSION 9,0
 
 @REQUIRE "RapaGUI",{version=1,revision=2}
 
@@ -284,7 +284,12 @@ EndFunction
 Function p_swapEntries(first, second, parent)
 	; swap entries
 	assert(haveItem(first, "uid"))
-	assert(haveitem(second, "uid"))
+	assert(haveItem(second, "uid"))
+	assert(haveItem(parent, "uid"))
+	assert(parent.type=group OR
+		parent.type=window OR
+		parent.type=dialog OR
+		parent.type=application)
 	Local content=treeitems[parent.uid].contents
 	Local slot1=treeitems[first.uid].slot
 	Local slot2=treeitems[second.uid].slot

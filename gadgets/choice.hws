@@ -155,8 +155,14 @@ EndFunction
 **
 **	Helper for GenerateXML$ and PreviewXML$
 */
-Function choice.makeBody$(self, indention)
-	Local xml$=""
+Function choice.makeBody$(self, indention, isPreview)
+	If self.itemlen=0
+		moai.Request("Empty Choice", 
+			"Empty choice gadget repalced with rectangle", "OK", "Warning")
+		Return(RepeatStr("\t",indention).."<rectangle />\n")
+	EndIf
+	Local xml$=IIf(isPreview, "<choice",
+		RepeatStr("\t", indention).."<choice id=\""..self.name$.."\"")..">\n"
 	For Local k=0 To self.itemlen-1
 		xml$=xml$..RepeatStr("\t", indentation+1).."<item>"..
 			self.itemlist$[k].."</item>\n"
@@ -171,13 +177,7 @@ EndFunction
 **	Generates XML code for choice gadget
 */
 Function choice.define:generateXML$(indention)
-	If self.itemlen=0
-		Return(RepeatStr("\t", indention)..
-			"<choice id=\""..self.name$.."\" />\n")
-	EndIf
-	Local xml$=RepeatStr("\t",indention).."<choice id=\""..self.name$.."\">\n"..
-		choice.makeBody$(self, indention)
-	Return(xml$)
+	Return(choice.makeBody$(self, indention, false))
 EndFunction
 
 
@@ -187,11 +187,7 @@ EndFunction
 **	Generates XML preview for choice gadget
 */
 Function choice.define:previewXML$(indention)
-	If self.itemlen=0
-		Return("<choice />\n")
-	EndIf
-	Local xml$="<choice>\n"..choice.makeBody$(self, 0)
-	Return(xml$)
+	Return(choice.makeBody$(self, 0, true))
 EndFunction
 
 /*

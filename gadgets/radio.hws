@@ -161,13 +161,13 @@ EndFunction
 */
 Function radio.makeBody$(self, indention, isPreview)
 	If self.itemlen=0
-		moai.Request("Empty Radio", "Empty radio gadget ignored",
-			"OK", "Warning")
-		Return("")
+		moai.Request("Empty Radio", 
+			"Empty radio gadget replaced with rectangle", "OK", "Warning")
+		Return(RepeatStr("\t",indention).."<rectangle />\n")
 	EndIf
 	Local xml$=RepeatStr("\t", indention).."<radio"..
 		IIf(isPreview,"", " id=\""..self.name$.."\"")..
-			IIf(self.title$<>""," title=\""..self.title$.."\"","").." />\n"
+			IIf(self.title$<>""," title=\""..self.title$.."\"","")..">\n"
 	For Local k=0 To self.itemlen-1
 		xml$=xml$..RepeatStr("\t", indentation+1).."<item>"..
 			self.itemlist$[k].."</item>\n"
