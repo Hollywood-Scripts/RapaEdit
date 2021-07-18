@@ -30,7 +30,7 @@
 			<item id="mn_rapa" help="Information about RapaGUI plugin">About RapaGUI</item>
 		</menu>
 	</menubar>
-	<window id="win_" title="RapaEdit" menubar="menu" notify="CloseRequest">
+	<window id="win_" title="RapaEdit" menubar="menu" notify="CloseRequest" width="640" height="400">
 		<vgroup>
 			<toolbar>
 				<button id="tb_new" icon="2">New</button>
@@ -44,8 +44,8 @@
 				<button id="tb_upgadget" icon="10">Move Up</button>
 				<button id="tb_downgadget" icon="11">Move Down</button>
 			</toolbar>
-			<hgroup>
-				<vgroup weight="1">
+			<hsplitter id="spl_split">
+				<vgroup>
 					<listview id="lv_gadgets" forcemode="listview" notify="DoubleClick">
 						<column sortable="1" />
 					</listview>
@@ -58,10 +58,10 @@
 					<button id="wa_window" icon="7" >Add Window</button>
 					<button id="wa_dialog" icon="7" >Add Dialog</button>
 				</vgroup>
-				<treeview id="tree_hierarchy" weight="15">
+				<treeview id="tree_hierarchy">
 					<column />
 				</treeview>
-			</hgroup>
+			</hsplitter>
 		</vgroup>
 	</window>
 </application>

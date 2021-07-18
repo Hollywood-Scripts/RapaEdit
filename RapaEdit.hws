@@ -5,7 +5,7 @@
 */
 @VERSION 9,0
 
-@REQUIRE "RapaGUI",{version=1,revision=2}
+@REQUIRE "RapaGUI",{version=2,revision=0}
 
 @FILE 1, "RapaEdit.xml"
 @BRUSH 2, "icons/new.png", {LoadAlpha=True}
@@ -283,13 +283,9 @@ EndFunction
 */
 Function p_swapEntries(first, second, parent)
 	; swap entries
-	assert(haveItem(first, "uid"))
-	assert(haveItem(second, "uid"))
-	assert(haveItem(parent, "uid"))
-	assert(parent.type=group OR
-		parent.type=window OR
-		parent.type=dialog OR
-		parent.type=application)
+	assert(Not IsNil(RawGet(first, "uid")))
+	assert(Not IsNil(RawGet(second, "uid")))
+	assert(Not IsNil(RawGet(parent, "uid")))
 	Local content=treeitems[parent.uid].contents
 	Local slot1=treeitems[first.uid].slot
 	Local slot2=treeitems[second.uid].slot
@@ -300,9 +296,9 @@ Function p_swapEntries(first, second, parent)
 	content[slot1].slot=slot2
 	; move GUI items
 	If first.Node
+		; TODO swap node code
 		assert(false)
-		
-;		moai.DoMethod("tree_hierarchy", "InsertNode", first.ID, parent.ID, second.ID, Unpack(first.items))
+		moai.DoMethod("tree_hierarchy", "InsertNode", first.ID, parent.ID, second.ID, first.name)
 	Else
 		moai.DoMethod("tree_hierarchy", "Remove", first.ID)
 		moai.DoMethod("tree_hierarchy", "InsertLeaf", first.ID, parent.ID, second.ID, Unpack(first.items))
@@ -310,7 +306,7 @@ Function p_swapEntries(first, second, parent)
 	; refresh UID in treeitems
 	Local newUID=moai.Get(first.ID, "UID")
 	treeitems[newUID]=treeitems[first.UID]
-	treeitems[UID1]=Nil
+	treeitems[first.UID]=Nil
 EndFunction
 
 /*
@@ -326,17 +322,17 @@ EndFunction
 Function p_moveUp()
 	Local found, tbl=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Previous")
 	If Not found
-		NotFound("first")
+		NotFound("Higher")
 		Return
 	EndIf
 	Local found2, tbl2=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Active")
 	If Not found2
-		NotFound("second")
+		NotFound("Current")
 		Return
 	EndIf
 	Local foundParent, tblParent=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Parent")
 	If Not foundParent
-		NotFound("parent")
+		NotFound("Parent")
 		Return
 	EndIf
 	p_swapEntries(tbl, tbl2, tblParent)
@@ -348,17 +344,17 @@ EndFunction
 Function p_moveDown()
 	Local found, tbl=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Active")
 	If Not found
-		NotFound("first")
+		NotFound("Current")
 		Return
 	EndIf
 	Local found2, tbl2=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Next")
 	If Not found2
-		NotFound("second")
+		NotFound("Lower")
 		Return
 	EndIf
 	Local foundParent, tblParent=moai.DoMethod("tree_hierarchy", "GetEntry", "Active", "Parent")
 	If Not foundParent
-		NotFound("parent")
+		NotFound("Parent")
 		Return
 	EndIf
 	p_swapEntries(tbl, tbl2, tblParent)
@@ -494,6 +490,9 @@ For i$,j In Pairs(gadgetclasses)
 		prefixes[j["prefix$"]]=p_handler
 	EndIf
 Next
+
+moai.Set("spl_split", "position", "128")
+moai.Set("spl_split", "gravity", "5")
 
 ;not listed in gadget because each application is a new document
 gadgetclasses["application"]=application
