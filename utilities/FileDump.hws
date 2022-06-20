@@ -6,7 +6,7 @@
 **	By Samuel D. Crow
 */
 
-@VERSION 8,0
+@VERSION 9,1
 @REQUIRE "RapaGUI"
 
 Global idEnum=0

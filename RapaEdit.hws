@@ -3,7 +3,7 @@
 **
 **  By Samuel D. Crow
 */
-@VERSION 9,0
+@VERSION 9,1
 
 @REQUIRE "RapaGUI",{version=2,revision=0}
 
