@@ -332,8 +332,8 @@ Function group.load(self, myParent)
 	self["count"]=group.count
 	self["id$"]="grp"..StrStr(self.count)
 	group.count=group.count+1
-	self["previewXML$"]=group.define.previewXML$
-	self["generateXML$"]=group.define.generateXML$
+	self["previewxml$"]=group.define.previewXML$
+	self["generatexml$"]=group.define.generateXML$
 	self["delete"]=group.define.delete
 	self["parent"]=myParent
 	self["application"]=myParent.application

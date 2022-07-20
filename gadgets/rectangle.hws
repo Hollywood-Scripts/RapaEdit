@@ -141,8 +141,8 @@ Function rectangle.load(self, myParent)
 	self["count"]=rectangle.count
 	self["id$"]="Rect"..StrStr(self.count)
 	rectangle.count=rectangle.count+1
-	self["generateXML$"]=rectangle.define.generateXML$
-	self["previewXML$"]=rectangle.define.generateXML$
+	self["generatexml$"]=rectangle.define.generateXML$
+	self["previewxml$"]=rectangle.define.generateXML$
 	self["delete"]=rectangle.define.delete
 	self["parent"]=myParent
 	self["application"]=myParent.application

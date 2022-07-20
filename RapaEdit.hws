@@ -208,6 +208,7 @@ Function p_preview()
 		pnl=pnl.parent
 		DebugPrint("parent is "..pnl.kind$)
 	Wend
+	DebugPrint("found "..pnl.kind$.." with "..IIf(IsNil(RawGet(pnl,"previewxml$")),"uninitialized",GetType(pnl.previewXML$)).." value.")
 	Local xml$=pnl:previewXML$()
 	DebugPrint(xml$)
 	moai.CreateDialog(xml$, "win_")

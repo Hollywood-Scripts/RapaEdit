@@ -266,7 +266,7 @@ Function application.load()
 	loadbuf["kind$"]=application.kind$
 	loadbuf["saved"]=True
 	loadbuf["application"]=loadbuf
-	loadbuf["generateXML$"]=application.generateXML$
+	loadbuf["generatexml$"]=application.generateXML$
 	loadbuf["children"]=0
 	application.beAdded(loadbuf)
 	For k, v In IPairs(loadbuf.contents)

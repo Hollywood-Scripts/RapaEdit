@@ -256,8 +256,8 @@ Function radio.load(self, myParent)
 	self["count"]=radio.count
 	self["id$"]="ch"..StrStr(self.count)
 	radio.count=radio.count+1
-	self["previewXML$"]=radio.define.previewXML$
-	self["generateXML$"]=radio.define.generateXML$
+	self["previewxml$"]=radio.define.previewXML$
+	self["generatexml$"]=radio.define.generateXML$
 	self["delete"]=radio.define.delete
 	self["parent"]=myParent
 	self["application"]=myParent.application

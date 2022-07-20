@@ -230,11 +230,11 @@ Function button.load(self, myParent)
 	self["count"]=button.count
 	self["id$"]="btn"..StrStr(button.count)
 	button.count=button.count+1
-	self["generateXML$"]=button.define.generateXML$
-	self["previewXML$"]=button.define.previewXML$
+	self["generatexml$"]=button.define.generateXML$
+	self["previewxml$"]=button.define.previewXML$
 	self["delete"]=button.define.delete
-	self["addGadget"]=button.define.addGadget
-	self["remGadget"]=button.define.remGadget
+	self["addgadget"]=button.define.addGadget
+	self["remgadget"]=button.define.remGadget
 	self["parent"]=myParent
 	self["application"]=myParent.application
 	self["type"]=button

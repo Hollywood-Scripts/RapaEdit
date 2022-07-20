@@ -251,8 +251,8 @@ Function choice.load(self, myParent)
 	self["count"]=choice.count
 	self["id$"]="ch"..StrStr(self.count)
 	choice.count=choice.count+1
-	self["previewXML$"]=choice.define.previewXML$
-	self["generateXML$"]=choice.define.generateXML$
+	self["previewxml$"]=choice.define.previewXML$
+	self["generatexml$"]=choice.define.generateXML$
 	self["delete"]=choice.define.delete
 	self["parent"]=myParent
 	self["application"]=myParent.application

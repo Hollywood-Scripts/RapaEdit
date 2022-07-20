@@ -238,9 +238,9 @@ Function dialog.load(self, myParent)
 	self["count"]=dialog.count
 	self["id$"]="dlg"..StrStr(self.count)
 	dialog.count=dialog.count+1
-	self["previewXML$"]=dialog.define.previewXML$
-	self["generateXML$"]=dialog.define.generateXML$
-	self["makeBody$"]=dialog.define.makeBody$
+	self["previewxml$"]=dialog.define.previewXML$
+	self["generatexml$"]=dialog.define.generateXML$
+	self["makebody$"]=dialog.define.makeBody$
 	self["delete"]=dialog.define.delete
 	self["parent"]=myParent
 	self["application"]=myParent
