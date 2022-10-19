@@ -169,7 +169,7 @@ Function radio.makeBody$(self, indention, isPreview)
 		IIf(isPreview,"", " id=\""..self.name$.."\"")..
 			IIf(self.title$<>""," title=\""..self.title$.."\"","")..">\n"
 	For Local k=0 To self.itemlen-1
-		xml$=xml$..RepeatStr("\t", indentation+1).."<item>"..
+		xml$=xml$..RepeatStr("\t", indention+1).."<item>"..
 			self.itemlist$[k].."</item>\n"
 	Next
 	xml$=xml$..RepeatStr("\t", indention).."</radio>\n"

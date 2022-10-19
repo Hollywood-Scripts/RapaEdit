@@ -237,9 +237,9 @@ Function window.load(self, myParent)
 	self["count"]=window.count
 	self["id$"]="win"..StrStr(self.count)
 	window.count=window.count+1
-	self["generatexml$"]=window.define.generatexml$
+	self["generatexml$"]=window.define.generateXML$
 	self["makebody$"]=window.define.makeBody$
-	self["previewxml$"]=window.define.previewxml$
+	self["previewxml$"]=window.define.previewXML$
 	self["delete"]=window.define.delete
 	self["parent"]=myParent
 	self["application"]=myParent
