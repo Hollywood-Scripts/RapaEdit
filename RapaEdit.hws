@@ -5,7 +5,7 @@
 */
 @VERSION 9,1
 
-@REQUIRE "RapaGUI",{version=2,revision=0}
+@REQUIRE "RapaGUI",{version=2,revision=1}
 
 @FILE 1, "RapaEdit.xml"
 @BRUSH 2, "icons/new.png", {LoadAlpha=True}
